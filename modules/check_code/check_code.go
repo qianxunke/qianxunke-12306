@@ -13,6 +13,7 @@ import (
 	"qianxunke-12306/config/api"
 	"qianxunke-12306/modules/conversation"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,12 +53,17 @@ func getVCode(conversation *conversation.Conversation) (vCode VCode, err error) 
 	vCode.CallbackParameter = cbpara + "_" + strconv.FormatInt(time.Now().UnixNano()/10000000, 10)
 	vCode.Timestamp = strconv.FormatInt(time.Now().UnixNano()/10000000, 10)
 	req, _ := http.NewRequest(http.MethodGet, api.GET_CHECK_CODE+"?login_site=E&module=login&rand=sjrand&"+vCode.Timestamp+"=&callback="+vCode.CallbackParameter+"&_="+vCode.Timestamp, nil)
+	req.Header.Set("Origin", "https://kyfw.12306.cn")
+	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/resources/login.html")
 	http_util.SetReqHeader(req)
 	resp, err := conversation.Client.Do(req)
 	if err != nil {
 		return
 	}
-	conversation.C = resp.Cookies()
+	if len(resp.Cookies()) > 0 {
+		conversation.C = resp.Cookies()
+	}
+	log.Printf("getVCode--->%v", req.Cookies())
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -169,12 +175,17 @@ func simulatedClick(codeList []string) (result string, err error) {
 //向12306验证-验证码
 func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strIdentify string) (err error) {
 	data := url.Values{}
-	data.Set("answer", strIdentify)
 	data.Set("callback", code.CallbackParameter)
+	data.Set("answer", strIdentify)
 	data.Set("rand", "sjrand")
 	data.Set("login_site", "E")
-	data.Set("_", code.Timestamp)
-	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/passport/captcha/captcha-check?callback="+code.CallbackParameter+"&answer="+strIdentify+"&rand=sjrand&login_site=E&_="+strconv.FormatInt(time.Now().UnixNano()/10000000, 10), nil)
+	data.Set("_", strconv.FormatInt(time.Now().UnixNano()/10000000, 10))
+	req, _ := http.NewRequest(http.MethodPost, "https://kyfw.12306.cn/passport/captcha/captcha-check", strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	//req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	req.Header.Set("Origin", "https://kyfw.12306.cn")
+	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/resources/login.html")
+	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 	http_util.AddReqCookie(conversation.C, req)
 	http_util.SetReqHeader(req)
 	resp, err := conversation.Client.Do(req)
@@ -188,8 +199,11 @@ func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strId
 		fmt.Printf("error: %s\n", err.Error())
 		return
 	}
+	if len(resp.Cookies()) > 0 {
+		conversation.C = resp.Cookies()
+	}
+	log.Printf("checkCodeTo12306--->%v", req.Cookies())
 	log.Println(string(body) + "\n")
-//	conversation.C = resp.Cookies()
 	return
 }
 

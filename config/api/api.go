@@ -9,10 +9,27 @@ const POST_CHECK_CODE_FROM_MY_SERVER = "http://49.235.63.91/verify/base64"
 const LoginURL = "https://kyfw.12306.cn/passport/web/login"
 
 //Link to get Token
-const GetToken = "https://kyfw.12306.cn/passport/web/auth/uamtk"
+const GetToken = "https://kyfw.12306.cn/passport/web/auth/uamtk-static"
 
 //Link to check Token
 const CheckToken = "https://kyfw.12306.cn/otn/uamauthclient"
 
-//Link to check user login status
+//检查用户登陆状态
 const CheckLoginStatus = "https://kyfw.12306.cn/otn/login/checkUser"
+
+//Link to get station code 获取火车站点
+const GetStationCode = "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js"
+
+//Link to query train message 查询
+const Query = "https://kyfw.12306.cn/otn/leftTicket/query"
+
+// submitOrderRequestURL
+const SubmitOrderRequestURL = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest"
+const InitDcURL = "https://kyfw.12306.cn/otn/confirmPassenger/initDc"
+const GetPassenger = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs"
+const CheckOrderInfo = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo"
+const GetQueueCountURL = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount"
+const ConfirmSingleForQueueURL = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue"
+const QueryOrderTime = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime"
+const ResultOrderForQueue = "https://kyfw.12306.cn/otn/confirmPassenger/resultOrderForDcQueue"
+const BookResult = "https://kyfw.12306.cn/otn//payOrder/init?random="
