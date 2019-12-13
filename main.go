@@ -10,8 +10,6 @@ import (
 
 func main() {
 	u := login.User{UserName: "dh17862709691", Pwd: "736567805", Id: "5225***********610", Name: "王芳平", TelNum: "18334142052", SeatType: "1", RideDate: "2019-12-15", Departure: "杭州", Terminus: "上海"}
-	//u := login.User{UserName: "hefulill", Pwd: "HEFULI2425", Id: "5225***********610", Name: "曾秀英", TelNum: "17863939472", SeatType: "1", RideDate: "2019-12-15", Departure: "杭州", Terminus: "上海"}
-
 	sysinit.Init()
 	var result login.LoginResult
 	for true {

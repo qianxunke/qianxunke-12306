@@ -25,13 +25,21 @@ const Query = "https://kyfw.12306.cn/otn/leftTicket/query"
 
 // submitOrderRequestURL
 const SubmitOrderRequestURL = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest"
+
 const InitDcURL = "https://kyfw.12306.cn/otn/confirmPassenger/initDc"
+
 const GetPassenger = "https://kyfw.12306.cn/otn/confirmPassenger/getPassengerDTOs"
+
 const CheckOrderInfo = "https://kyfw.12306.cn/otn/confirmPassenger/checkOrderInfo"
+
 const GetQueueCountURL = "https://kyfw.12306.cn/otn/confirmPassenger/getQueueCount"
+
 const ConfirmSingleForQueueURL = "https://kyfw.12306.cn/otn/confirmPassenger/confirmSingleForQueue"
+
 const QueryOrderTime = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime"
+
 const ResultOrderForQueue = "https://kyfw.12306.cn/otn/confirmPassenger/resultOrderForDcQueue"
+
 const BookResult = "https://kyfw.12306.cn/otn//payOrder/init?random="
 
 //退出登陆
