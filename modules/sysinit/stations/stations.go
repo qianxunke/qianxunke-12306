@@ -48,6 +48,7 @@ func GetStationValueByKey(key string) (value string) {
 			key := s[(first + 1):(first + 1 + second)]
 			value := s[(first + 1 + second + 1):(first + 1 + second + 1 + third)]
 			stationMap[key] = value
+			stationMap[value] = key
 		}
 
 	}
@@ -87,5 +88,6 @@ func Init() {
 		key := s[(first + 1):(first + 1 + second)]
 		value := s[(first + 1 + second + 1):(first + 1 + second + 1 + third)]
 		stationMap[key] = value
+		stationMap[value] = key
 	}
 }

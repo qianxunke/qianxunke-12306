@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 )
 
@@ -45,8 +46,8 @@ type InitDC struct {
 
 type QueryTimeResult struct {
 	OK        bool
-	WaitTime  int64
-	WaitCount int64
+	WaitTime  float64
+	WaitCount float64
 	OrderId   string
 }
 
@@ -95,24 +96,26 @@ func FormatInitDc(ticketInfoForPassengerForm string) (intDoc InitDC, err error) 
 		Purpose_codes      string
 		Train_location     string
 		LeftDetails        []string
-		Key_check_isChange string
+		Key_check_isChange string `json:"key_check_isChange"`
 	}
 	doc := &Doc{}
 	err = json.Unmarshal([]byte(newTicketInfoForPassengerForm), &doc)
 	if err != nil {
 		return
 	}
-
+	log.Printf("[formatInewTicketInfoForPassengerFormnitDc] doc :%s\n", newTicketInfoForPassengerForm)
 	log.Printf("[formatInitDc] doc :%v\n", doc)
 	intDoc.TrainDateTime = fmt.Sprintf("%d", doc.OrderRequestDTO.Train_date.Time)
 	intDoc.FromStationTelecode = doc.OrderRequestDTO.From_station_telecode
-	intDoc.LeftTicketStr = doc.LeftTicketStr
+	t, _ := url.PathUnescape(doc.LeftTicketStr)
+	intDoc.LeftTicketStr = t
 	intDoc.PurposeCodes = doc.Purpose_codes
 	intDoc.StationTrainCode = doc.OrderRequestDTO.Station_train_code
 	intDoc.ToStationTelecode = doc.OrderRequestDTO.To_station_telecode
 	intDoc.TrainLocation = doc.Train_location
 	intDoc.TrainNo = doc.QueryLeftTicketRequestDTO.Train_no
 	intDoc.LeftDetails = doc.LeftDetails
+	intDoc.KeyCheckIsChange = doc.Key_check_isChange
 	log.Printf("[formatInitDc] intDoc :%v\n", intDoc)
 	return
 }

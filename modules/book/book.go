@@ -21,7 +21,7 @@ import (
 )
 
 //下单
-func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u login.User) {
+func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u login.User) (ok bool) {
 	// 设置绑定会话的客户端
 	boolResult := &bookBean.BookResult{}
 	// 检查登录状态
@@ -54,7 +54,7 @@ func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u
 		return
 	}
 	// 获取乘客信息
-	err = getPassenger(&conversation, boolResult)
+	err = getPassenger(http.MethodPost, &conversation, boolResult)
 	if err != nil {
 		log.Println("[getPassenger] error :" + err.Error())
 		return
@@ -63,7 +63,7 @@ func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u
 		log.Println("乘客信息请求失败...")
 		return
 	}
-	err = checkOrderInfo(&conversation, boolResult, u)
+	err = checkOrderInfo(http.MethodPost, &conversation, boolResult, u)
 	if err != nil {
 		log.Println("[checkOrderInfo] error :" + err.Error())
 		return
@@ -73,6 +73,9 @@ func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u
 		log.Println("订单信息检查错误...")
 		return
 	}
+_:
+	getQueueCount(&conversation, boolResult)
+
 	err = getConfirmSingleForQueue(&conversation, boolResult)
 	if err != nil {
 		log.Println("[getConfirmSingleForQueue] error :" + err.Error())
@@ -104,6 +107,8 @@ func Book(conversation conversation.Conversation, chooseTrain queryBean.Train, u
 	if boolResult.Finish {
 		log.Println("恭喜您，订票成功，请在30分钟内登录12306完成支付！")
 	}
+	ok = true
+	return
 }
 
 /**
@@ -120,12 +125,14 @@ func submitOrder(conversation *conversation.Conversation, bookResult *bookBean.B
 	}()
 	log.Println("正在检查是否有未完成订单...")
 	data := &url.Values{}
-	data.Set("secretStr", chooseTrain.SecretStr) //这里注意
-	data.Set("train_date", chooseTrain.StartDate)
+	//tm := time.Now()
+	str, _ := url.QueryUnescape(chooseTrain.SecretStr)
+	data.Set("secretStr", str) //这里注意
+	data.Set("train_date", chooseTrain.StartDate[:4]+"-"+chooseTrain.StartDate[4:6]+"-"+chooseTrain.StartDate[6:])
 	//	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 	//	String back_train_date = sdf.format(new Date());
-	tm := time.Now()
-	data.Set("back_train_date", fmt.Sprintf("%d-%d-%d", tm.Year(), tm.Month(), tm.Day()))
+
+	data.Set("back_train_date", "")
 	data.Set("tour_flag", "dc")
 	data.Set("purpose_codes", "ADULT")
 	data.Set("query_from_station_name", stations.GetStationValueByKey(chooseTrain.FindFrom))
@@ -139,6 +146,7 @@ func submitOrder(conversation *conversation.Conversation, bookResult *bookBean.B
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 	http_util.SetReqHeader(req)
 	http_util.AddReqCookie(conversation.C, req)
+	log.Printf("[submitOrder]: req %v\n", data)
 	rsp, err := conversation.Client.Do(req)
 	if err != nil {
 		log.Printf("[submitOrder]: %s\n", err.Error())
@@ -152,9 +160,7 @@ func submitOrder(conversation *conversation.Conversation, bookResult *bookBean.B
 	defer rsp.Body.Close()
 	log.Printf("[submitOrder] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
@@ -199,25 +205,28 @@ func getInitDc(conversation *conversation.Conversation, bookResult *bookBean.Boo
 		return
 	}
 	defer rsp.Body.Close()
-	log.Printf("[getInitDc] bodyBytes : %s\n", string(bodyBytes))
+	//	log.Printf("[getInitDc] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		str := string(bodyBytes)
 		htmls := strings.Split(str, "\n")
 		for _, line := range htmls {
 			if strings.Contains(line, "globalRepeatSubmitToken") {
+				//	log.Println("line : "+line )
 				bookResult.GlobalRepeatSubmitToken = line[strings.Index(line, "'")+1 : len(line)-2]
+				log.Println("bookResult.GlobalRepeatSubmitToken : " + bookResult.GlobalRepeatSubmitToken)
 			}
 
 			if strings.Contains(line, "var ticketInfoForPassengerForm") {
+				//	log.Println("line : "+line )
 				ticketInfo := line[strings.Index(line, "{") : len(line)-1]
+				//	log.Printf("ticketInfo : %v\n" ,ticketInfo)
 				da, err := bookBean.FormatInitDc(ticketInfo)
 				if err != nil {
-					return
+					return err
 				}
 				bookResult.InitDcInfo = da
+				//	log.Printf("bookResult.InitDcInfo : %v\n" ,bookResult.InitDcInfo)
 			}
 		}
 		bookResult.InitDc = true
@@ -230,16 +239,14 @@ func getInitDc(conversation *conversation.Conversation, bookResult *bookBean.Boo
 
 }
 
-func getPassenger(conversation *conversation.Conversation, bookResult *bookBean.BookResult) (err error) {
-
+func getPassenger(method string, conversation *conversation.Conversation, bookResult *bookBean.BookResult) (err error) {
 	log.Println("正在请求乘客信息...")
-
 	data := &url.Values{}
 	data.Set("_json_att", "")
 	data.Set("REPEAT_SUBMIT_TOKEN", bookResult.GlobalRepeatSubmitToken)
-	req, _ := http.NewRequest(http.MethodPost, api.GetPassenger, strings.NewReader(data.Encode()))
+	req, _ := http.NewRequest(method, api.GetPassenger, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	//	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
 	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/confirmPassenger/initDc")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
@@ -256,15 +263,18 @@ func getPassenger(conversation *conversation.Conversation, bookResult *bookBean.
 		return
 	}
 	defer rsp.Body.Close()
+	log.Printf("[getPassenger]:  %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
 			log.Printf("[getPassenger]: %s\n", err.Error())
-			return
+			if method == http.MethodPost {
+				return getPassenger(http.MethodPut, conversation, bookResult)
+			} else {
+				return
+			}
 		}
 		if m["status"].(bool) && m["httpstatus"].(float64) == http.StatusOK {
 			bookResult.Passenger = true
@@ -273,13 +283,13 @@ func getPassenger(conversation *conversation.Conversation, bookResult *bookBean.
 			bookResult.Passenger = false
 		}
 	} else {
-		log.Printf("[getPassenger]:  %s\n", string(bodyBytes))
+		log.Printf("[getPassenger]: %d\n", rsp.StatusCode)
 		return
 	}
 	return
 }
 
-func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBean.BookResult, u login.User) (err error) {
+func checkOrderInfo(method string, conversation *conversation.Conversation, bookResult *bookBean.BookResult, u login.User) (err error) {
 	log.Println("正在检查订单信息...")
 	defer func() {
 		if re := recover(); re != nil {
@@ -287,7 +297,7 @@ func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBea
 		}
 	}()
 	// 拼接passengerTicketStr
-	passengerTicketStr := u.SeatType + ",0,1," + u.Name + ",1," + u.Id + "," + u.TelNum + ",N"
+	passengerTicketStr := u.SeatType + ",0,1," + u.Name + ",1," + u.Id + "," + u.TelNum + ",N," + "31d2c03567240868c35d68fa9a0d6b5c17cea9706ee43b3a7e066ced20000a692802483a95e936594e91b6096da9c9e8"
 	// 拼接oldPassengerStr
 	oldPassengerStr := u.Name + ",1," + u.Id + ",1_"
 	// 准备表单数据
@@ -303,14 +313,15 @@ func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBea
 	data.Set("whatsSelect", "1")
 	data.Set("_json_att", "")
 	data.Set("REPEAT_SUBMIT_TOKEN", bookResult.GlobalRepeatSubmitToken)
-	req, _ := http.NewRequest(http.MethodPost, api.CheckOrderInfo, strings.NewReader(data.Encode()))
+	req, _ := http.NewRequest(method, api.CheckOrderInfo, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	//	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
-	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/leftTicket/init")
+	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/confirmPassenger/initDc")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 	http_util.SetReqHeader(req)
 	http_util.AddReqCookie(conversation.C, req)
+	log.Printf("request : %v\n", data)
 	rsp, err := conversation.Client.Do(req)
 	if err != nil {
 		log.Printf("[checkOrderInfo]: %s", err.Error())
@@ -322,17 +333,20 @@ func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBea
 		return
 	}
 	defer rsp.Body.Close()
-	log.Printf("[checkOrderInfo] bodyBytes : %s\n", string(bodyBytes))
+
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
 			log.Printf("[checkOrderInfo]: %s", err.Error())
-			return
+			if method == http.MethodPost {
+				return checkOrderInfo(http.MethodPut, conversation, bookResult, u)
+			} else {
+				return
+			}
 		}
+		log.Printf("[checkOrderInfo] bodyBytes : %s\n", string(bodyBytes))
 		if m["status"].(bool) && m["data"].(map[string]interface{})["submitStatus"].(bool) {
 			bookResult.CheckOrderInfo = true
 		} else {
@@ -340,7 +354,7 @@ func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBea
 			bookResult.CheckOrderInfo = false
 		}
 	} else {
-		log.Printf("[checkOrderInfo]:  %s\n", string(bodyBytes))
+		log.Printf("[checkOrderInfo]:  %d\n", rsp.StatusCode)
 		return errors.New("network error")
 	}
 	return
@@ -353,8 +367,56 @@ func checkOrderInfo(conversation *conversation.Conversation, bookResult *bookBea
  * @return
  */
 
-func getQueueCount(bookResult *bookBean.BookResult) {
-	// logger.info("正在进入队列...");
+func getQueueCount(conversation *conversation.Conversation, bookResult *bookBean.BookResult) (err error) {
+	log.Println("[getQueueCount] 获取队列信息...")
+	defer func() {
+		if re := recover(); re != nil {
+			err = errors.New(fmt.Sprintf("%s", re))
+		}
+	}()
+	//Sun Dec 15 2019 00:00:00 GMT+0800 (中国标准时间)
+	//  tm:=time.Now()
+	data := &url.Values{}
+	data.Set("_json_att", "")
+	data.Set("from_station_telecode", bookResult.InitDcInfo.FromStationTelecode)
+	data.Set("leftTicket", bookResult.InitDcInfo.LeftTicketStr)
+	data.Set("purpose_codes", bookResult.InitDcInfo.PurposeCodes)
+	data.Set("REPEAT_SUBMIT_TOKEN", bookResult.GlobalRepeatSubmitToken)
+	data.Set("seatType", "O")
+	data.Set("stationTrainCode", bookResult.InitDcInfo.StationTrainCode)
+	data.Set("toStationTelecode", bookResult.InitDcInfo.ToStationTelecode)
+	data.Set("train_date", "Sun Dec 15 2019 00:00:00 GMT+0800")
+	data.Set("train_location", bookResult.InitDcInfo.TrainLocation)
+	data.Set("train_no", bookResult.InitDcInfo.TrainNo)
+	req, _ := http.NewRequest(http.MethodPost, api.GetQueueCountURL, strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	req.Header.Set("Origin", "https://kyfw.12306.cn")
+	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/confirmPassenger/initDc")
+	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
+	http_util.SetReqHeader(req)
+	http_util.AddReqCookie(conversation.C, req)
+	log.Printf("request : %v\n", data)
+	rsp, err := conversation.Client.Do(req)
+	if err != nil {
+		log.Printf("[getQueueCount]: %s", err.Error())
+		return
+	}
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		log.Printf("[getQueueCount]: %s", err.Error())
+		return
+	}
+	defer rsp.Body.Close()
+	log.Println(string(bodyBytes))
+	if rsp.StatusCode == http.StatusOK {
+		http_util.CookieChange(conversation, rsp.Cookies())
+
+	} else {
+		log.Printf("[getQueueCount]:  %d\n", rsp.StatusCode)
+		return errors.New("network error")
+	}
+	return
 	// String URL = IOUtils.getPropertyValue("checkOrderInfo");
 	// HttpPost queueCountPost = new HttpPost(URL);
 	//
@@ -405,7 +467,7 @@ func getQueueCount(bookResult *bookBean.BookResult) {
  * @return
  */
 func getConfirmSingleForQueue(conversation *conversation.Conversation, bookResult *bookBean.BookResult) (err error) {
-	log.Println("正在下单...")
+	log.Println("[getConfirmSingleForQueue]正在下单...")
 	defer func() {
 		if re := recover(); re != nil {
 			err = errors.New(fmt.Sprintf("%s", re))
@@ -426,11 +488,12 @@ func getConfirmSingleForQueue(conversation *conversation.Conversation, bookResul
 	data.Set("seatDetailType", "000")
 	data.Set("train_location", bookResult.InitDcInfo.TrainLocation)
 	data.Set("whatsSelect", "1")
+	log.Printf("[getConfirmSingleForQueue]: req : %v\n", data)
 	req, _ := http.NewRequest(http.MethodPost, api.ConfirmSingleForQueueURL, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+	//	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
-	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/leftTicket/init")
+	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/confirmPassenger/initDc")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 	http_util.SetReqHeader(req)
 	http_util.AddReqCookie(conversation.C, req)
@@ -447,9 +510,7 @@ func getConfirmSingleForQueue(conversation *conversation.Conversation, bookResul
 	defer rsp.Body.Close()
 	log.Printf("[getConfirmSingleForQueue] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
@@ -541,9 +602,7 @@ func getQueryOrderTimeMethod(r *http.Request, conversation *conversation.Convers
 	defer rsp.Body.Close()
 	log.Printf("[getQueryOrderTimeMethod] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
@@ -556,8 +615,8 @@ func getQueryOrderTimeMethod(r *http.Request, conversation *conversation.Convers
 			return
 		}
 		if m["status"].(bool) && m["data"].(map[string]interface{})["queryOrderWaitTimeStatus"].(bool) {
-			queryTimeResult.WaitTime = m["data"].(map[string]interface{})["waitTime"].(int64)
-			queryTimeResult.WaitTime = m["data"].(map[string]interface{})["waitCount"].(int64)
+			queryTimeResult.WaitTime = m["data"].(map[string]interface{})["waitTime"].(float64)
+			queryTimeResult.WaitTime = m["data"].(map[string]interface{})["waitCount"].(float64)
 			if m["data"].(map[string]interface{})["orderId"] != nil {
 				queryTimeResult.OK = true
 				queryTimeResult.OrderId = m["data"].(map[string]interface{})["orderId"].(string)
@@ -612,9 +671,7 @@ func getResultOrderForQueue(conversation *conversation.Conversation, bookResult 
 	defer rsp.Body.Close()
 	log.Printf("[getResultOrderForQueue] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
@@ -672,9 +729,7 @@ func getOrderMsg(conversation *conversation.Conversation, bookResult *bookBean.B
 	defer rsp.Body.Close()
 	log.Printf("[getResultOrderForQueue] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		str := string(bodyBytes)
 		htmls := strings.Split(str, "\n")
 		var result = ""

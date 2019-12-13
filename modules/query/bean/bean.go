@@ -13,6 +13,20 @@ type Train struct {
 	CostTime  string
 	CanBuy    string
 	StartDate string
+
+	Swtdz string //32
+	Ydz   string //31
+	Edz   string //30
+	Gjrw  string //21
+	Rw    string //23
+	Dw    string //33
+	Yw    string //28
+	Rz    string //24
+	Yz    string //29
+	Wz    string //26
+	Qt    string //22
+	Bz    string //1
+
 }
 
 type QueryItem struct {

@@ -37,6 +37,7 @@ type CheckResponse struct {
 
 //获取验证码
 func getVCode(conversation *conversation.Conversation) (vCode VCode, err error) {
+	log.Println("[getVCode] 获取验证码...")
 	defer func() {
 		if re := recover(); re != nil {
 			if err == nil {
@@ -60,10 +61,7 @@ func getVCode(conversation *conversation.Conversation) (vCode VCode, err error) 
 	if err != nil {
 		return
 	}
-	if len(resp.Cookies()) > 0 {
-		conversation.C = resp.Cookies()
-	}
-	log.Printf("getVCode--->%v", req.Cookies())
+	http_util.CookieChange(conversation, resp.Cookies())
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -86,6 +84,7 @@ func getVCode(conversation *conversation.Conversation) (vCode VCode, err error) 
 
 //验证码识别
 func checkCodeIdentify(vCode VCode) (result string, err error) {
+	log.Println("[checkCodeIdentify]识别验证码...")
 	defer func() {
 		if re := recover(); re != nil {
 			if err != nil {
@@ -116,6 +115,7 @@ func checkCodeIdentify(vCode VCode) (result string, err error) {
 
 //模拟用户点击验证码
 func simulatedClick(codeList []string) (result string, err error) {
+	log.Println("[simulatedClick]模拟点击验证码...")
 	if len(codeList) == 0 {
 		err = errors.New("codeList is nil")
 		return
@@ -174,6 +174,7 @@ func simulatedClick(codeList []string) (result string, err error) {
 
 //向12306验证-验证码
 func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strIdentify string) (err error) {
+	log.Println("[checkCodeTo12306]向12306验证-验证码...")
 	data := url.Values{}
 	data.Set("callback", code.CallbackParameter)
 	data.Set("answer", strIdentify)
@@ -199,10 +200,7 @@ func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strId
 		fmt.Printf("error: %s\n", err.Error())
 		return
 	}
-	if len(resp.Cookies()) > 0 {
-		conversation.C = resp.Cookies()
-	}
-	log.Printf("checkCodeTo12306--->%v", req.Cookies())
+	http_util.CookieChange(conversation, resp.Cookies())
 	log.Println(string(body) + "\n")
 	return
 }

@@ -9,7 +9,7 @@ const POST_CHECK_CODE_FROM_MY_SERVER = "http://49.235.63.91/verify/base64"
 const LoginURL = "https://kyfw.12306.cn/passport/web/login"
 
 //Link to get Token
-const GetToken = "https://kyfw.12306.cn/passport/web/auth/uamtk-static"
+const GetToken = "https://kyfw.12306.cn/passport/web/auth/uamtk"
 
 //Link to check Token
 const CheckToken = "https://kyfw.12306.cn/otn/uamauthclient"
@@ -33,3 +33,8 @@ const ConfirmSingleForQueueURL = "https://kyfw.12306.cn/otn/confirmPassenger/con
 const QueryOrderTime = "https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime"
 const ResultOrderForQueue = "https://kyfw.12306.cn/otn/confirmPassenger/resultOrderForDcQueue"
 const BookResult = "https://kyfw.12306.cn/otn//payOrder/init?random="
+
+//退出登陆
+const LoginOut = "https://kyfw.12306.cn/otn/login/loginOut"
+
+const Init = "https://kyfw.12306.cn/otn/login/init"

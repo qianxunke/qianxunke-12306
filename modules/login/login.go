@@ -54,7 +54,6 @@ func checkUser(u User, method string, checkCode string, loginResult *LoginResult
 	data.Set("answer", checkCode)
 	req, _ := http.NewRequest(method, api.LoginURL, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
 	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/resources/login.html")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
@@ -82,19 +81,26 @@ func checkUser(u User, method string, checkCode string, loginResult *LoginResult
 			}
 		}
 		log.Printf("[checkUser]%v", m)
-		if m["result_code"].(float64) == 0 {
+		isOk := false
+		switch m["result_code"].(type) {
+		case string:
+			if m["result_code"].(string) == "0" {
+				isOk = true
+			}
+		case float64:
+			if m["result_code"].(float64) == 0 {
+				isOk = true
+			}
+		}
+		if isOk {
 			log.Println("账号密码正确...")
 			loginResult.CheckUser = true
-			if len(rsp.Cookies()) > 0 {
-				loginResult.Conversat.C = rsp.Cookies()
-			}
+			http_util.CookieChange(loginResult.Conversat, rsp.Cookies())
 			return err
 		} else {
 			log.Println("账号密码错误...")
 			loginResult.CheckUser = false
-			if len(rsp.Cookies()) > 0 {
-				loginResult.Conversat.C = rsp.Cookies()
-			}
+			http_util.CookieChange(loginResult.Conversat, rsp.Cookies())
 			return err
 		}
 	} else {
@@ -116,7 +122,6 @@ func getToken(loginResult *LoginResult) (err error) {
 	data.Set("appid", "otn")
 	req, _ := http.NewRequest(http.MethodPost, api.GetToken, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	//	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
 	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/resources/login.html")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
@@ -141,9 +146,7 @@ func getToken(loginResult *LoginResult) (err error) {
 			return err
 		}
 		log.Println(m)
-		if len(rsp.Cookies()) > 0 {
-			loginResult.Conversat.C = rsp.Cookies()
-		}
+		http_util.CookieChange(loginResult.Conversat, rsp.Cookies())
 		loginResult.Newapptk = m["newapptk"].(string)
 		loginResult.GetToken = true
 		return err
@@ -167,22 +170,23 @@ func checkToken(loginResult *LoginResult) (err error) {
 	data.Set("tk", loginResult.Newapptk)
 	req, _ := http.NewRequest(http.MethodPost, api.CheckToken, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
 	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/passport?redirect=/otn/login/userLogin")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
 	http_util.SetReqHeader(req)
 	http_util.AddReqCookie(loginResult.Conversat.C, req)
+	log.Println()
 	rsp, err := loginResult.Conversat.Client.Do(req)
 	if err != nil {
 		return err
 	}
+	str, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		log.Println("[checkToken] error" + err.Error())
+		return err
+	}
+	log.Printf("[checkToken] respose body %s\n", string(str))
 	if rsp.StatusCode == http.StatusOK {
-		str, err := ioutil.ReadAll(rsp.Body)
-		if err != nil {
-			log.Println("[checkToken] error" + err.Error())
-			return err
-		}
 		m := make(map[string]interface{})
 		err = json.Unmarshal(str, &m)
 		if err != nil {
@@ -204,17 +208,15 @@ func checkToken(loginResult *LoginResult) (err error) {
 			loginResult.CheckToken = true
 			loginResult.Apptk = m["apptk"].(string)
 			loginResult.Username = m["username"].(string)
-			if len(rsp.Cookies()) > 0 {
-				loginResult.Conversat.C = rsp.Cookies()
-			}
+			http_util.CookieChange(loginResult.Conversat, rsp.Cookies())
 			log.Println("登陆成功,用户名:" + loginResult.Username)
 			return err
 		} else {
-			log.Println("登陆失败,用户名:" + loginResult.Username)
-			return err
+			log.Println("请求失败...,需要重新登陆")
+			return errors.New("需要重新登陆")
 		}
 	} else {
-		log.Println("网络错误，错误信息:")
+		log.Printf("网络错误，错误信息: %d", rsp.StatusCode)
 		err = errors.New("网络错误，错误信息:")
 		return err
 	}
@@ -235,7 +237,6 @@ func CheckUserStatus(bookResult *bean.BookResult, conversation *conversation.Con
 	data.Set("_json_att", "")
 	req, _ := http.NewRequest(http.MethodPost, api.CheckLoginStatus, strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 	req.Header.Set("Origin", "https://kyfw.12306.cn")
 	req.Header.Set("Referer", "https://kyfw.12306.cn/otn/leftTicket/init")
 	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
@@ -244,16 +245,14 @@ func CheckUserStatus(bookResult *bean.BookResult, conversation *conversation.Con
 	rsp, err := conversation.Client.Do(req)
 	if err != nil {
 		log.Printf("[CheckUserStatus]: %v", err.Error())
-		return
+		return err
 	}
 	if rsp.StatusCode == http.StatusOK {
-		if len(rsp.Cookies()) > 0 {
-			conversation.C = rsp.Cookies()
-		}
+		http_util.CookieChange(conversation, rsp.Cookies())
 		bodyBytes, err := ioutil.ReadAll(rsp.Body)
 		if err != nil {
 			log.Printf("[CheckUserStatus]: %v", err.Error())
-			return
+			return err
 		}
 		defer rsp.Body.Close()
 		log.Printf("[CheckUserStatus]: response : %v", string(bodyBytes))
@@ -261,9 +260,9 @@ func CheckUserStatus(bookResult *bean.BookResult, conversation *conversation.Con
 		err = json.Unmarshal(bodyBytes, &m)
 		if err != nil {
 			log.Printf("[CheckUserStatus]: %v", err.Error())
-			return
+			return err
 		}
-		if m["status"].(bool) && m["flag"].(bool) {
+		if m["status"].(bool) && m["data"].(map[string]interface{})["flag"].(bool) {
 			bookResult.CheckUser = true
 		} else {
 			return errors.New("login status error")
@@ -272,14 +271,52 @@ func CheckUserStatus(bookResult *bean.BookResult, conversation *conversation.Con
 		log.Printf("[CheckUserStatus]: response error %d", rsp.StatusCode)
 		return errors.New("response error")
 	}
+	return err
+}
+
+func LoginOut(loginResult *LoginResult) (err error) {
+	log.Println("正在退出登陆...")
+	req, _ := http.NewRequest(http.MethodGet, api.LoginOut, nil)
+	http_util.SetReqHeader(req)
+	http_util.AddReqCookie(loginResult.Conversat.C, req)
+	rsp, err := loginResult.Conversat.Client.Do(req)
+	if err != nil {
+		log.Printf("[CheckUserStatus]: %v", err.Error())
+		return err
+	}
+	defer rsp.Body.Close()
+	req, _ = http.NewRequest(http.MethodGet, api.Init, nil)
+	http_util.SetReqHeader(req)
+	http_util.AddReqCookie(loginResult.Conversat.C, req)
+	rsp, err = loginResult.Conversat.Client.Do(req)
+	defer rsp.Body.Close()
+	if err != nil {
+		log.Printf("[LoginOut]: %v", err.Error())
+		return err
+	}
+	loginResult.Conversat.C = rsp.Cookies()
+	data := &url.Values{}
+	data.Set("appid", "otn")
+	req, _ = http.NewRequest(http.MethodPost, "https://kyfw.12306.cn/passport/web/auth/uamtk", strings.NewReader(data.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Set("Origin", "https://kyfw.12306.cn")
+	req.Header.Set("Content-Length", strconv.Itoa(len(data.Encode())))
+	http_util.SetReqHeader(req)
+	http_util.AddReqCookie(loginResult.Conversat.C, req)
+	rsp, err = loginResult.Conversat.Client.Do(req)
+	defer rsp.Body.Close()
+	if err != nil {
+		log.Printf("[LoginOut]: %v", err.Error())
+		return err
+	}
+	loginResult.Conversat.Client.CloseIdleConnections()
 	return
 }
 
-func Login(u User) (loginResult *LoginResult) {
+func Login(u User) (loginResult *LoginResult, err error) {
 	loginResult = &LoginResult{}
 	loginResult.Conversat = &conversation.Conversation{}
 	loginResult.Conversat.Client = &http.Client{}
-
 	//验证码
 	code, err := check_code.CheckCode(loginResult.Conversat)
 	if err != nil {
