@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package auth;
+
+service Auth {
+
+    //生成token
+    rpc MakeAccessToken (Request) returns (Response) {
+
+    }
+    //删除用户token
+    rpc DelUserAccessToken (Request) returns (Response) {
+    }
+    //鉴权toke
+    rpc AuthenticationFromToken (Request) returns (Response) {
+    }
+}
+
+message Error {
+    int32 code = 1;
+    string message = 2;
+}
+
+message Request {
+    int64 userId = 1;
+    string userName = 2;
+    string token = 3;
+}
+
+message Response {
+    bool success = 1;
+    Error error = 2;
+    string token = 3;
+    int64 userId = 4;
+}

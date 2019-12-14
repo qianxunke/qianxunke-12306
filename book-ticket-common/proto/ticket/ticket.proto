@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+package ticket;
+
+message Error {
+    int32 code = 1;
+    string message = 2;
+}
+service TrainService {
+    //获取Train详细信息
+    rpc GetTrainInfo (In_GetTrainInfo) returns (Out_GetTrainInfo) {
+    }
+    //获取票列表
+    rpc GetTrainInfoList (In_GetTrainInfoList) returns (Out_GetTrainInfoList) {
+    }
+    //修改信息
+    rpc UpdateTrainInfo (In_UpdateTrainInfo) returns (Out_UpdateTrainInfo) {
+    }
+    //新增信息
+    rpc AddTrain (In_AddTrain) returns (Out_AddTrain) {
+    }
+
+}
+
+message Train  {
+string	secret_str=1;
+string	train_code=2;
+string	num =3;
+string	from =4;
+string	to   =5;
+string	find_from  =6;   //查询的始发站
+string	find_to    =7;   //查询的终点站
+string	start_time =8;
+string	end_time   =9;
+string	cost_time  =10;
+string	can_buy    =11;
+string	train_date =12;
+string	swtdz   =13;    //32
+string	ydz  =14 ;    //31
+string	edz  =15 ;   //30
+string	gjrw =16;    //21
+string	rw  =17;   //23
+string	dw  =18;   //33
+string	yw  =19;  //28
+string	rz  =20;   //24
+string	yz  =21;  //29
+string	wz  =22; //26
+string	qt   =23;  //22
+string	bz  =24;  //1
+string purpose_codes=25; //成人，或学生
+}
+
+
+
+message In_GetTrainInfo {
+    string secret_str = 1;
+}
+
+message Out_GetTrainInfo {
+    Error error = 1;
+    Train train = 2; //用户信息
+}
+
+
+
+message In_GetTrainInfoList {
+  string	find_from  =1;   //查询的始发站
+  string	find_to    =2;   //查询的终点站
+  string	train_date =3;
+  string    purpose_codes=4;     //ADULT
+}
+
+message Out_GetTrainInfoList {
+    Error error = 1;
+    int64 limit = 2;
+    int64 pages = 3;
+    int64 total = 4;
+    repeated Train train_list = 5;
+}
+
+message In_UpdateTrainInfo {
+    Train Train = 1;
+}
+message Out_UpdateTrainInfo {
+    Error Error = 1;
+    Train train = 2;
+}
+
+message In_AddTrain {
+    Train train = 1; //基本信息
+}
+
+message Out_AddTrain {
+    Error Error = 1;
+    Train train = 2;
+}
+
+

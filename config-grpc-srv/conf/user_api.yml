@@ -1,0 +1,13 @@
+user_api:
+  user_api_app:
+    name: com.surprise.shop.api.user
+    address: 127.0.0.1
+    port: 9100
+  url_whitelist:
+    - /user/login
+    - /user/register
+    - /user/code
+  consul:
+    enabled: true
+    host: 127.0.0.1
+    port: 8500

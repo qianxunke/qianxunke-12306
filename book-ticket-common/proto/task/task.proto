@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package task;
+
+service TaskService {
+      //获取任务详细信息
+       rpc GetTaskInfo (In_GetTaskInfo) returns (Out_GetTaskInfo) {
+       }
+       //获取票列表
+       rpc GetTaskInfoList (In_GetTaskInfoList) returns (Out_GetTaskInfoList) {
+       }
+       //修改信息
+       rpc UpdateTaskInfo (In_UpdateTaskInfo) returns (Out_UpdateTaskInfo) {
+       }
+       //新增信息
+       rpc AddTask (In_AddTask) returns (Out_AddTask) {
+       }
+}
+
+//leftTicketDTO.train_date:2018-01-18
+//  leftTicketDTO.from_station:IOQ
+//  leftTicketDTO.to_station:CBQ
+//   purpose_codes:ADULT
+
+message Task {
+    string  task_id = 1;      //订单ID
+    int64   user_id = 2;       //用户id
+    string  seat_types=3;     //座位类型 1,2,3
+    string	train_dates=4;    // 乘车日期 格式为2017-01-01,
+    string	find_from=5;     // 查询始发站
+    string	find_to=6;        // 查询终点站
+    string  ok_no=10;          //抢成功时的12306订单号
+    int64   status=11;        //状态 -1：失效  1：待抢  2，挺抢  3，抢成功
+    string  created_time=12;
+}
+
+message Task_passenger{
+int64   id=1;
+string  task_id=2;
+string	name=3;      // 乘车人用户名
+string	id_num=4;         // 乘车人身份证
+string	tel_num=5;     // 语音通知及接收短信手机号
+string	type=6;   // 身份 成人，学生
+string	seat_num=7;    // 座号，同12306，不一定可以选到希望的座位
+string  allEncStr=8;   //
+}
+
+message TaskDetails{
+  Task task = 2; //用户信息
+  repeated  Task_passenger task_passenger=3;
+}
+
+
+message Error {
+    int32 code = 1;
+    string message = 2;
+}
+
+message In_GetTaskInfo {
+    string task_id = 1;
+}
+
+message Out_GetTaskInfo {
+    Error error = 1;
+    TaskDetails taskDetails=2;
+}
+
+message In_GetTaskInfoList {
+    int64 limit = 1;
+    int64 pages = 2;
+    string search_key = 3;
+    string status=4;
+    string start_time = 5;
+    string end_time = 6;
+}
+
+message Out_GetTaskInfoList {
+    Error error = 1;
+    int64 limit = 2;
+    int64 pages = 3;
+    int64 total = 4;
+    repeated  TaskDetails task_details_list=5;
+}
+
+
+message In_UpdateTaskInfo {
+    TaskDetails taskDetails=1;
+}
+message Out_UpdateTaskInfo {
+    Error Error = 1;
+}
+
+message In_AddTask {
+   TaskDetails taskDetails=1;
+}
+
+message Out_AddTask {
+    Error Error = 1;
+    TaskDetails taskDetails=2;
+}
+
+

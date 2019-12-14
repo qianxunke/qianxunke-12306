@@ -1,0 +1,84 @@
+package handler
+
+import (
+	"context"
+	"github.com/micro/go-micro/util/log"
+	"surprise-shop-auth/model/access"
+	auth "gitee.com/qianxunke/surprise-shop-common/protos/auth"
+	"strconv"
+)
+
+//声明service
+var (
+	accessService access.Service
+)
+
+func Init() {
+	var err error
+	accessService, err = access.GetService()
+	if err != nil {
+		log.Fatal("[Init] 初始化Handler错误，%s", err)
+		return
+	}
+}
+
+//实现proto接口
+type Auth struct {
+}
+
+func (s *Auth) MakeAccessToken(ctx context.Context, req *auth.Request, rsp *auth.Response) (err error) {
+	log.Log("[MakeAccessToken] 收到创建token请求: " + strconv.FormatInt(req.UserId, 10) + "  " + req.UserName)
+
+	token, err := accessService.MakeAccessToken(&access.Subject{
+		ID:   strconv.FormatInt(req.UserId, 10),
+		Name: req.UserName,
+	})
+
+	if err != nil {
+		rsp.Error = &auth.Error{
+			Message: err.Error(),
+		}
+		log.Logf("[MakeAccessToken] token生成失败，err：%s", err)
+		return err
+	}
+
+	rsp.Token = token
+	return
+}
+
+// DelUserAccessToken 清除用户token
+func (s *Auth) DelUserAccessToken(ctx context.Context, req *auth.Request, rsp *auth.Response) error {
+	log.Log("[DelUserAccessToken] 清除用户token")
+	err := accessService.DelUserAccessToken(req.Token)
+	if err != nil {
+		rsp.Error = &auth.Error{
+			Message: err.Error(),
+		}
+
+		log.Logf("[DelUserAccessToken] 清除用户token失败，err：%s", err)
+		return err
+	}
+
+	return nil
+}
+
+// 鉴权用户
+func (s *Auth) AuthenticationFromToken(ctx context.Context, req *auth.Request, rsp *auth.Response) error {
+	userSub, err := accessService.AuthenticationFromToken(req.Token)
+	if err != nil {
+		rsp.Error = &auth.Error{
+			Message: err.Error(),
+		}
+		rsp.Success = false
+		log.Logf("[AuthenticationFromToken] 鉴权用户token失败，err：%s", err)
+		return err
+	}
+	rsp.UserId, err = strconv.ParseInt(userSub.ID, 10, 64)
+	if err != nil {
+		rsp.Success = false
+		log.Logf("[AuthenticationFromToken] 鉴权用户token失败，err：%s", err)
+		return err
+	}
+	rsp.Success = true
+	return nil
+}

@@ -1,0 +1,25 @@
+user_srv:
+  user_srv_app:
+    name: com.surprise.shop.srv.user
+    address: 127.0.0.1
+    port: 9101
+  consul:
+    enabled: true
+    host: 127.0.0.1
+    port: 8500
+  db:
+    mysql:
+      enabled: true
+      url: root:root@(127.0.0.1:3306)/surprise_shop_user?charset=utf8&parseTime=true&loc=Asia%2FShanghai
+      maxIdleConnection: 100
+      maxOpenConnection: 130
+  redis:
+    enabled: true
+    conn: 127.0.0.1:6379
+    dbNum: 8
+    password:
+    timeout: 3000
+    sentinel:
+      enabled: false
+      master: bookMaster
+      nodes: 127.0.0.1:16379,127.0.0.1:26379,127.0.0.1:36379

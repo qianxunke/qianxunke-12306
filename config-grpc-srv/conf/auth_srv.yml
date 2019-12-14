@@ -1,0 +1,21 @@
+auth_srv:
+  auth_srv_app:
+    name: com.surprise.shop.srv.auth
+    address: 127.0.0.1
+    port: 9091
+  consul:
+    enabled: true
+    host: 127.0.0.1
+    port: 8500
+  redis:
+    enabled: true
+    conn: 127.0.0.1:6379
+    dbNum: 8
+    password:
+    timeout: 6000
+    sentinel:
+      enabled: false
+      master: bookMaster
+      nodes: 127.0.0.1:16379,127.0.0.1:26379,127.0.0.1:36379
+  jwt:
+    secretKey: I_AM_PASSWORD
