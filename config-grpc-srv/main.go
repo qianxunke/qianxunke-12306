@@ -17,7 +17,7 @@ import (
 var (
 	//mux        sync.RWMutex
 	//configMaps = make(map[string]*proto.ChangeSet)
-	apps = []string{"file_api", "es_srv", "auth_srv", "user_api", "user_srv", "inventory_srv", "order_srv", "order_api", "payment_srv", "payment_api", "user_srv", "inventory_api"}
+	apps = []string{"auth_srv", "user_api", "user_srv", "book_ticket_srv", "book_ticket_api", "query_api", "query_srv", "inventory_srv"}
 )
 
 type Service struct{}
@@ -90,6 +90,7 @@ func loadAndWatchConfigFile() (err error) {
 			log.Fatalf("[loadAndWatchConfigFile] 加载应用配置文件 异常，%s", err)
 			return err
 		}
+
 	}
 
 	// 侦听文件变动
@@ -106,7 +107,6 @@ func loadAndWatchConfigFile() (err error) {
 				log.Fatalf("[loadAndWatchConfigFile] 侦听应用配置文件变动 异常， %s", err)
 				return
 			}
-
 			log.Logf("[loadAndWatchConfigFile] 文件变动，%s", string(v.Bytes()))
 		}
 	}()

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/micro/go-micro/util/log"
 
-	auth "gitee.com/qianxunke/surprise-shop-common/protos/auth"
+	auth "gitee.com/qianxunke/book-ticket-common/proto/auth"
 )
 
 type Auth struct{}

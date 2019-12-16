@@ -3,8 +3,7 @@ module surprise-shop-auth
 go 1.13
 
 require (
-	gitee.com/qianxunke/surprise-shop-common v0.0.0-00010101000000-000000000000
-	//	gitee.com/qianxunke/surprise-shop-common v1.0.1
+	gitee.com/qianxunke/book-ticket-common v0.0.0-00010101000000-000000000000
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis v6.15.6+incompatible
 	github.com/micro/cli v0.2.0
@@ -13,4 +12,4 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 )
 
-replace gitee.com/qianxunke/surprise-shop-common => ../surprise-shop-common
+replace gitee.com/qianxunke/book-ticket-common => ../book-ticket-common

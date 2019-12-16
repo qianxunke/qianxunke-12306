@@ -24,8 +24,14 @@ service UserInfo {
     rpc GetUserPassengerList (In_GetUserPassengerList) returns (Out_GetUserPassengerList) {
      }
      //修改用户联系人
-    rpc UpdateUserPassenger (In_UpdateUserPassenger) returns (Out_UpdateUserPassenger) {
-      }
+     rpc UpdateUserPassenger (In_UpdateUserPassenger) returns (Out_UpdateUserPassenger) {
+     }
+     //登陆12306
+     rpc Login12306 (In_Login12306) returns (Out_Login12306) {
+
+     }
+
+
 }
 message Error {
     int32 code = 1;
@@ -33,7 +39,7 @@ message Error {
 }
 
 message User_inf {
-    int64 user_id = 1;
+    string user_id = 1;
     string nike_name = 2;
     string user_name = 3;
     string password = 4; //登陆密码
@@ -54,36 +60,37 @@ message User_inf {
 
 //用户的联系人列表
 message Passenger{
-        int64               user_id=1;           //账户id
-        string              passenger_name=2;     //:"王芳平",
-        string              sex_code=3;    //":"M",
-        string              sex_name=4;    //":"男",
-        string              born_date=5;   //:"1980-01-01 00:00:00",
-        string              country_code=6;  //:"CN",
-        string              passenger_id_type_code=7;  //:"1",
-        string              passenger_id_type_name=8;   //:"中国居民身份证",
-        string              passenger_id_no=9;        //":"5225***********610",
-        string              passenger_type=10;        //:"1",
-        string              passenger_flag=11;       //:"0",
-        string              passenger_type_name=12;  //:"成人",
-        string              mobile_no=13;            //:"18334142052",
-        string              phone_no=14;             //":"",
-        string              email=15;               //:"",
-        string              address=16;               //:"",
-        string              postalcode=17;           //":"",
-        string              first_letter=18;         //:"WFP",
-        string              recordCount=19;         //":"4",
-        string              total_times=20;         //":"99",
-        string              index_id=21;             //:"1",
-        string              allEncStr=22;           //":"31d2c03567240868c35d68fa9a0d6b5c17cea9706ee43b3a7e066ced20000a692802483a95e936594e91b6096da9c9e8",
-        string              isAdult=23;              //":"Y",
-        string              isYongThan10=24;         //":"N",
-        string              isYongThan14=25;           //":"N",
-        string              isOldThan60=26;             //   :"N",
-        string              gat_born_date=27;          //":"",
-        string              gat_valid_date_start=28;  //''":"",
-        string              gat_valid_date_end=29;     //:"",
-        string              gat_version=30;             //:""
+         string             id=1;                   //账户id
+        string              user_id=2;           //账户id
+        string              passenger_name=3;     //:"王芳平",
+        string              sex_code=4;    //":"M",
+        string              sex_name=5;    //":"男",
+        string              born_date=6;   //:"1980-01-01 00:00:00",
+        string              country_code=7;  //:"CN",
+        string              passenger_id_type_code=8;  //:"1",
+        string              passenger_id_type_name=9;   //:"中国居民身份证",
+        string              passenger_id_no=10;        //":"5225***********610",
+        string              passenger_type=11;        //:"1",
+        string              passenger_flag=12;       //:"0",
+        string              passenger_type_name=13;  //:"成人",
+        string              mobile_no=14;            //:"18334142052",
+        string              phone_no=15;             //":"",
+        string              email=16;               //:"",
+        string              address=17;               //:"",
+        string              postalcode=18;           //":"",
+        string              first_letter=19;         //:"WFP",
+        string              recordCount=20;         //":"4",
+        string              total_times=21;         //":"99",
+        string              index_id=22;             //:"1",
+        string              allEncStr=23;           //":"31d2c03567240868c35d68fa9a0d6b5c17cea9706ee43b3a7e066ced20000a692802483a95e936594e91b6096da9c9e8",
+        string              isAdult=24;              //":"Y",
+        string              isYongThan10=25;         //":"N",
+        string              isYongThan14=26;           //":"N",
+        string              isOldThan60=27;             //   :"N",
+        string              gat_born_date=28;          //":"",
+        string              gat_valid_date_start=29;  //''":"",
+        string              gat_valid_date_end=30;     //:"",
+        string              gat_version=31;             //:""
 
 
 }
@@ -104,7 +111,7 @@ message Out_doneUserLogin {
 message In_getUserInfo {
     string user_name = 1;
     string mobile_phone = 2;
-    int64 user_id = 3;
+    string user_id = 3;
 }
 
 message Out_getUserInfo {
@@ -159,7 +166,7 @@ message Out_getVerificationCode {
 }
 
 message In_GetUserPassengerList {
-   int64 user_id=1;
+   string user_id=1;
 }
 
 message Out_GetUserPassengerList {
@@ -168,7 +175,7 @@ message Out_GetUserPassengerList {
 }
 
 message In_UpdateUserPassenger {
-    int64 user_id=1;
+    string user_id=1;
    repeated Passenger passenger_list = 2;
 }
 
@@ -176,5 +183,13 @@ message Out_UpdateUserPassenger {
      Error Error = 1;
 }
 
+message In_Login12306 {
+     string user_id=1;
+     string tran_user_account =2;  //12306 用户账号
+     string tran_user_pwd =3;      //12306 用户密码
+}
 
+message Out_Login12306 {
+     Error Error = 1;
+}
 

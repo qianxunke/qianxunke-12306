@@ -2,7 +2,7 @@ inventory_srv:
   inventory_srv_app:
     name: com.surprise.shop.srv.inventory
     address: 127.0.0.1
-    port: 9095
+    port: 9096
   consul:
     enabled: true
     host: 127.0.0.1

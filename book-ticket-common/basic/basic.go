@@ -1,7 +1,7 @@
 package basic
 
 import (
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
 )
 
 var (

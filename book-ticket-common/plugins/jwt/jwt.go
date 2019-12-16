@@ -1,6 +1,6 @@
 package jwt
 
-import "gitee.com/qianxunke/surprise-shop-common/basic"
+import "gitee.com/qianxunke/book-ticket-common/basic"
 
 // Jwt 配置 接口
 type Jwt struct {

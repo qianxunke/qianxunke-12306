@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	status_code "gitee.com/qianxunke/surprise-shop-common/plugins/breaker/hystrix/http"
+	status_code "gitee.com/qianxunke/book-ticket-common/plugins/breaker/hystrix/http"
 	"github.com/afex/hystrix-go/hystrix"
 )
 

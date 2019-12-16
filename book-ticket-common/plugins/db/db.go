@@ -1,7 +1,7 @@
 package db
 
 import (
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
 	"github.com/jinzhu/gorm"
 	"github.com/kataras/golog"
 	"github.com/micro/go-micro/util/log"

@@ -1,70 +1,89 @@
 package main
 
 import (
-	"book-srv/modules/login"
-	"book-srv/modules/query"
-	"book-srv/modules/sysinit"
-	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
-	"gitee.com/qianxunke/book-ticket-common/basic/utils/http_util"
-	"io/ioutil"
+	"book-srv/handler"
+	"book-srv/m_client"
+	"book-srv/modules"
+	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/basic/common"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/lib/tracer"
+	"github.com/micro/cli"
+	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/registry"
+	"github.com/micro/go-plugins/config/source/grpc"
+	"github.com/micro/go-plugins/registry/consul"
+	ocplugin "github.com/micro/go-plugins/wrapper/trace/opentracing"
+	"github.com/opentracing/opentracing-go"
 	"log"
-	"net/http"
+	"time"
 )
 
+var (
+	appName = "book_ticket_srv"
+	cfg     = &userCfg{}
+)
+
+type userCfg struct {
+	common.AppCfg
+}
+
+////go run main.go plugin.go --broker=nats --broker_address=127.0.0.1:4222
 func main() {
-
-	u := login.User{UserName: "dh17862709691", Pwd: "736567805", Id: "5225***********610", Name: "王芳平", TelNum: "18334142052", SeatType: "1", RideDate: "2019-12-15", Departure: "杭州", Terminus: "上海"}
-	sysinit.Init()
-	/*
-		var result login.LoginResult
-		for true {
-			res, err := login.Login(u)
-			//	result2 := login.Login(login.User{UserName: "laidanchao", Pwd: "lai19920127"})
-			if err != nil {
-				//	login.LoginOut(res)
-				time.Sleep(time.Second * 10)
-			} else {
-				result = *res
-				break
-			}
-		}
-		var tran bean.Train
-		for true {
-			t, err := query.QueryTrainMessage(u, result.Conversat)
-			if err == nil {
-				tran = t
-				break
-			}
-		}
-
-		for true {
-			if book.Book(*result.Conversat, tran, u) {
-				break
-			}
-			time.Sleep(time.Second * 3)
-		}
-
-	*/
-
-	//
-	conversation := &conversation.Conversation{}
-	conversation.Client = &http.Client{}
-	//	check_code.CheckCode(conversation)
-	//	query.QueryTrainMessage(u,conversation)
-	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/otn/leftTicket/init", nil)
-	//http_util.AddReqCookie(conversation.C, req)
-	http_util.SetReqHeader(req)
-	rsp, err := conversation.Client.Do(req)
+	initCfg()
+	t, io, err := tracer.NewTracer(cfg.Name, "")
 	if err != nil {
-		log.Printf("[QueryTrainMessage] error %v", err)
+		log.Fatal(err)
 	}
-	_, err = ioutil.ReadAll(rsp.Body)
+	defer io.Close()
+	opentracing.SetGlobalTracer(t)
+
+	service := micro.NewService(
+		micro.Name(cfg.Name),
+		micro.Registry(consul.NewRegistry(registryOptions)),
+		micro.Version(cfg.Version),
+		micro.RegisterTTL(time.Second*15), //健康检查，15秒后重新向注册中心注册
+		micro.RegisterInterval(time.Second*10),
+		micro.WrapHandler(ocplugin.NewHandlerWrapper(opentracing.GlobalTracer())),
+	)
+
+	// Initialise service
+	service.Init(micro.Action(func(context *cli.Context) {
+		m_client.Init()
+		modules.Init()
+		handler.Init()
+
+	}))
+	//注册handler
+	handler.RegisterHandler(service.Server())
+
+	// Run service
+	if err := service.Run(); err != nil {
+		log.Fatal(err)
+	}
+
+}
+func registryOptions(ops *registry.Options) {
+	consulCfg := &common.Consul{}
+	err := config.C().App("consul", consulCfg)
 	if err != nil {
-		log.Printf("[QueryTrainMessage] error %v", err)
+		panic(err)
 	}
-	defer rsp.Body.Close()
-	log.Printf("[QueryTrainMessage]  %v\n", rsp.Cookies())
-	//log.Printf("[QueryTrainMessage]  %s\n", string(str))
-	http_util.CookieChange(conversation, rsp.Cookies())
-	query.QueryTrainMessage(u, conversation)
+	ops.Addrs = []string{fmt.Sprintf("%s:%d", consulCfg.Host, consulCfg.Port)}
+}
+func initCfg() {
+	source := grpc.NewSource(
+		grpc.WithAddress(common.ControlCenterAddress),
+		grpc.WithPath(appName),
+	)
+
+	basic.Init(config.WithSource(source))
+
+	err := config.C().App(appName+"_app", cfg)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("[initCfg] 配置，cfg：%v", cfg)
+	return
 }

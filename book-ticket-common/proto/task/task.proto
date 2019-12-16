@@ -24,18 +24,20 @@ service TaskService {
 
 message Task {
     string  task_id = 1;      //订单ID
-    int64   user_id = 2;       //用户id
+    string   user_id = 2;       //用户id
     string  seat_types=3;     //座位类型 1,2,3
     string	train_dates=4;    // 乘车日期 格式为2017-01-01,
     string	find_from=5;     // 查询始发站
     string	find_to=6;        // 查询终点站
     string  ok_no=10;          //抢成功时的12306订单号
-    int64   status=11;        //状态 -1：失效  1：待抢  2，挺抢  3，抢成功
+    int64   status=11;        //状态 -1：失效  1：待抢  2，正在抢  3，抢成功
     string  created_time=12;
+    string  type=13;         //ADULT STU
+    string  trips=14;       //车次
 }
 
 message Task_passenger{
-int64   id=1;
+string   id=1;
 string  task_id=2;
 string	name=3;      // 乘车人用户名
 string	id_num=4;         // 乘车人身份证
@@ -100,3 +102,20 @@ message Out_AddTask {
 }
 
 
+message OrderMsg{
+
+     string sequenceNo=1;
+	 string passengerIdTypeName=2;
+	 string passengerName=3;
+	 string passengerIdNo=4;
+	 string fromStationName=5;
+	 string toStationName=6;
+	 string stationTrainCode=7;
+	 string startTrainDate=8;
+	 string ticketPrice=9;
+	 string ticketTypeName=10;
+	 string coachName=11;
+	 string seatName=12;
+	 string seatTypeName=13;
+
+}

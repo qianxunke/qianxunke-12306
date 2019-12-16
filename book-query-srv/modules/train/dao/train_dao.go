@@ -2,6 +2,7 @@ package dao
 
 import (
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	"gitee.com/qianxunke/book-ticket-common/plugins/redis"
 	ticketProto "gitee.com/qianxunke/book-ticket-common/proto/ticket"
 	r "github.com/go-redis/redis"
@@ -43,6 +44,11 @@ func Init() {
 	defer m.Unlock()
 	if dao != nil {
 		return
+	}
+	// 检查模型是否存在
+	master := db.MasterEngine()
+	if !master.HasTable(&ticketProto.Train{}) {
+		master.CreateTable(&ticketProto.Train{})
 	}
 	dao = &ticketDaoIml{}
 	redisClient = redis.Redis()

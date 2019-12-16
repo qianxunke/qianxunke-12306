@@ -1,7 +1,6 @@
 package main
 
 import (
-	"book-query-srv/config/stations"
 	"book-query-srv/handler"
 	"book-query-srv/modules"
 	"fmt"
@@ -22,7 +21,7 @@ import (
 )
 
 var (
-	appName = "book-query-srv"
+	appName = "query_srv"
 	cfg     = &userCfg{}
 )
 
@@ -51,7 +50,6 @@ func main() {
 
 	// Initialise service
 	service.Init(micro.Action(func(context *cli.Context) {
-		stations.Init()
 		modules.Init()
 		handler.Init()
 	}))

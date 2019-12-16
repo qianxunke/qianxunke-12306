@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	appName = "inventory_api"
+	appName = "query_api"
 	cfg     = &appCfg{}
 )
 
@@ -55,6 +55,7 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin2micro.TracerWrapper)
+	router.Use(handler.AuthWrapper)
 	handler.RegiserRouter(service, router)
 
 	service.Handle("/", router)

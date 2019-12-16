@@ -13,7 +13,7 @@ import (
 
 func Init(client client.Client) *ApiService {
 	return &ApiService{
-		serviceClient: ticket.NewTrainService(basic.InventoryService, client),
+		serviceClient: ticket.NewTrainService(basic.QueryService, client),
 	}
 }
 

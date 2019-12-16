@@ -2,21 +2,21 @@ package main
 
 import (
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/basic/common"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/lib/tracer"
+	auth "gitee.com/qianxunke/book-ticket-common/proto/auth"
 	"github.com/micro/cli"
 	"github.com/micro/go-micro"
 	"github.com/micro/go-micro/registry"
-	"github.com/micro/go-plugins/registry/consul"
 	"github.com/micro/go-micro/util/log"
 	"github.com/micro/go-plugins/config/source/grpc"
+	"github.com/micro/go-plugins/registry/consul"
 	ocplugin "github.com/micro/go-plugins/wrapper/trace/opentracing"
 	"github.com/opentracing/opentracing-go"
 	"surprise-shop-auth/handler"
 	"surprise-shop-auth/model"
-	auth "gitee.com/qianxunke/surprise-shop-common/protos/auth"
-	"gitee.com/qianxunke/surprise-shop-common/basic"
-	"gitee.com/qianxunke/surprise-shop-common/basic/common"
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
-	"gitee.com/qianxunke/surprise-shop-common/basic/lib/tracer"
 	"time"
 )
 

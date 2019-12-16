@@ -2,6 +2,7 @@ package user_info
 
 import (
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	userInfoProto "gitee.com/qianxunke/book-ticket-common/proto/user"
 	"sync"
 )
@@ -33,6 +34,8 @@ type UserService interface {
 	GetUserPassengerList(req *userInfoProto.In_GetUserPassengerList) (rsp *userInfoProto.Out_GetUserPassengerList)
 	//修改用户联系人
 	UpdateUserPassenger(req *userInfoProto.In_UpdateUserPassenger) (rsp *userInfoProto.Out_UpdateUserPassenger)
+	//登陆12306客户
+	Login12306 (req *userInfoProto.In_Login12306)  (rsp *userInfoProto.Out_Login12306)
 }
 
 func GetService() (UserService, error) {
@@ -49,6 +52,13 @@ func Init() {
 
 	if s != nil {
 		return
+	}
+	master := db.MasterEngine()
+	if !master.HasTable(&userInfoProto.UserInf{}){
+		master.CreateTable(&userInfoProto.UserInf{})
+	}
+	if !master.HasTable(&userInfoProto.Passenger{}){
+		master.CreateTable(&userInfoProto.Passenger{})
 	}
 	s = &userInfoServiceImp{}
 }

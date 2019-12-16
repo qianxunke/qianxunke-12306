@@ -14,7 +14,7 @@ func (s *service) createTokenClaims(subject *Subject) (m *jwt.StandardClaims, er
 		NotBefore: nowTime.Unix(),
 		Id:        subject.ID,
 		IssuedAt:  nowTime.Unix(),
-		Issuer:    "shop.surprise-shop.com",
+		Issuer:    "ticket.book.com",
 		Subject:   subject.ID,
 	}
 	return

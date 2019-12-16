@@ -2,10 +2,9 @@ package handler
 
 import (
 	"context"
+	auth "gitee.com/qianxunke/book-ticket-common/proto/auth"
 	"github.com/micro/go-micro/util/log"
 	"surprise-shop-auth/model/access"
-	auth "gitee.com/qianxunke/surprise-shop-common/protos/auth"
-	"strconv"
 )
 
 //声明service
@@ -27,10 +26,10 @@ type Auth struct {
 }
 
 func (s *Auth) MakeAccessToken(ctx context.Context, req *auth.Request, rsp *auth.Response) (err error) {
-	log.Log("[MakeAccessToken] 收到创建token请求: " + strconv.FormatInt(req.UserId, 10) + "  " + req.UserName)
+	log.Log("[MakeAccessToken] 收到创建token请求: " + req.UserId + "  " + req.UserName)
 
 	token, err := accessService.MakeAccessToken(&access.Subject{
-		ID:   strconv.FormatInt(req.UserId, 10),
+		ID:   req.UserId,
 		Name: req.UserName,
 	})
 
@@ -73,7 +72,7 @@ func (s *Auth) AuthenticationFromToken(ctx context.Context, req *auth.Request, r
 		log.Logf("[AuthenticationFromToken] 鉴权用户token失败，err：%s", err)
 		return err
 	}
-	rsp.UserId, err = strconv.ParseInt(userSub.ID, 10, 64)
+	rsp.UserId = userSub.ID
 	if err != nil {
 		rsp.Success = false
 		log.Logf("[AuthenticationFromToken] 鉴权用户token失败，err：%s", err)

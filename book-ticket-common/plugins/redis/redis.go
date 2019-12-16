@@ -4,8 +4,8 @@ import (
 	"strings"
 	"sync"
 
-	"gitee.com/qianxunke/surprise-shop-common/basic"
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
 	r "github.com/go-redis/redis"
 	"github.com/micro/go-micro/util/log"
 )

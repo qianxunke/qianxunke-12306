@@ -44,7 +44,7 @@ func (s *service) GetTaskById(req *task.In_GetTaskInfo) (rsp *task.Out_GetTaskIn
 }
 
 //修改信息
-func (s *service) UpdateBrandInfo(req *task.In_UpdateTaskInfo) (rsp *task.Out_UpdateTaskInfo) {
+func (s *service) UpdateTaskInfo(req *task.In_UpdateTaskInfo) (rsp *task.Out_UpdateTaskInfo) {
 	defer func() {
 		if re := recover(); re != nil {
 			rsp.Error = &task.Error{
@@ -72,7 +72,7 @@ func (s *service) UpdateBrandInfo(req *task.In_UpdateTaskInfo) (rsp *task.Out_Up
 }
 
 //获取列表
-func (s *service) GetBrands(req *task.In_GetTaskInfoList) (rsp *task.Out_GetTaskInfoList) {
+func (s *service) GetTasks(req *task.In_GetTaskInfoList) (rsp *task.Out_GetTaskInfoList) {
 	rsp = &task.Out_GetTaskInfoList{}
 	//对参数鉴权
 	if req.Limit == 0 {
@@ -95,7 +95,7 @@ func (s *service) GetBrands(req *task.In_GetTaskInfoList) (rsp *task.Out_GetTask
 		}
 		return
 	}
-	rsp, err = dao.SimpleQuery(req.Limit, req.Pages, req.SearchKey, req.StartTime, req.EndTime, orderByStr)
+	rsp, err = dao.SimpleQuery(req.Limit, req.Pages, 1, req.SearchKey, req.StartTime, req.EndTime, orderByStr)
 	if err != nil {
 		log.Printf("ERROR: %v", err)
 		rsp.Error = &task.Error{
@@ -122,7 +122,7 @@ func (s *service) GetBrands(req *task.In_GetTaskInfoList) (rsp *task.Out_GetTask
 }
 
 //新建信息
-func (s *service) CreateBrand(req *task.In_AddTask) (rsp *task.Out_AddTask) {
+func (s *service) CreateTask(req *task.In_AddTask) (rsp *task.Out_AddTask) {
 	rsp = &task.Out_AddTask{}
 	//查询该等级是否存在
 	dao, err := book_dao.GetDao()
@@ -146,4 +146,25 @@ func (s *service) CreateBrand(req *task.In_AddTask) (rsp *task.Out_AddTask) {
 		Message: "新增成功!",
 	}
 	return
+}
+func (s *service) GetNeedTicketList(limit int64, pages int64, status int64) (rsp []task.TaskDetails, err error) {
+
+	//对参数鉴权
+	if limit == 0 {
+		limit = 10 //默认10个分页
+	}
+	if limit > 1000 { //每一页数量
+		limit = 1000
+	}
+	if pages <= 0 { //页数
+		pages = 1
+	}
+	dao, err := book_dao.GetDao()
+	if err != nil {
+		log.Printf("ERROR: %v", err)
+		return
+	}
+	rsp, err = dao.TicketQuery(limit, pages, status)
+	return
+
 }

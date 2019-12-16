@@ -1,0 +1,13 @@
+book_ticket_api:
+  book_ticket_api_app:
+    name: com.book.ticket.api.book_ticket
+    address: 127.0.0.1
+    port: 9094
+  url_whitelist:
+    - /user/login
+    - /user/register
+    - /user/code
+  consul:
+    enabled: true
+    host: 127.0.0.1
+    port: 8500

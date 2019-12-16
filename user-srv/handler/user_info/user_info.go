@@ -89,3 +89,9 @@ func (e *Handler) UpdateUserPassenger(ctx context.Context, req *userProto.In_Upd
 	rsp.Error = response.Error
 	return nil
 }
+func (e *Handler) Login12306(ctx context.Context, req *userProto.In_Login12306, rsp *userProto.Out_Login12306) error {
+	log.Log("Received UserInfo.Login12306 request")
+	response := userService.Login12306(req)
+	rsp.Error = response.Error
+	return nil
+}

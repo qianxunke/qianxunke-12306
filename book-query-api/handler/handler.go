@@ -2,7 +2,10 @@ package handler
 
 import (
 	"book-query-api/handler/train"
+	"book-query-api/m_client"
 	"context"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/proto/auth"
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/client"
@@ -12,7 +15,7 @@ import (
 )
 
 func Init() {
-
+	m_client.AuthClient = auth.NewAuthService(basic.AuthService, client.DefaultClient)
 }
 
 //注册路由

@@ -1,15 +1,14 @@
 package service
 
 import (
-	"book-query-srv/change"
-	"book-query-srv/config/api"
-	"book-query-srv/config/stations"
+	"book-query-srv/stations"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/http_util"
 	"gitee.com/qianxunke/book-ticket-common/proto/ticket"
+	"gitee.com/qianxunke/book-ticket-common/ticket/static/api"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -38,7 +37,7 @@ func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*tic
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
 	//ADULT
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+(*change.QUERY_KEY)+"?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+"A?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+stations.GetStationValueByKey(que.FindFrom)+"&leftTicketDTO.to_station="+stations.GetStationValueByKey(que.FindTo)+"&purpose_codes="+que.PurposeCodes, nil)
 	http_util.AddReqCookie(conversation2.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := conversation2.Client.Do(req1)
@@ -199,7 +198,7 @@ func formatQueryMessage(s []string) (trans []*ticket.Train, err error) {
  * @param newMessage
  * @param stationCode
  */
-func printTrainMessage(trans []ticket.Train) {
+func printTrainMessage(trans []*ticket.Train) {
 	fmt.Print("序号\t")
 	fmt.Print("车次\t")
 	fmt.Print("始发站\t")

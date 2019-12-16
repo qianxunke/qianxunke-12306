@@ -1,8 +1,8 @@
 user_api:
   user_api_app:
-    name: com.surprise.shop.api.user
+    name: com.book.ticket.api.user
     address: 127.0.0.1
-    port: 9100
+    port: 9099
   url_whitelist:
     - /user/login
     - /user/register

@@ -1,33 +1,33 @@
 package user_info
 
 import (
+	"book-user_api/m_client"
 	"context"
 	"errors"
-	"gitee.com/qianxunke/surprise-shop-common/basic"
-	"gitee.com/qianxunke/surprise-shop-common/basic/api_common"
-	"gitee.com/qianxunke/surprise-shop-common/basic/common"
-	auth "gitee.com/qianxunke/surprise-shop-common/protos/auth"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/basic/api_common"
+	"gitee.com/qianxunke/book-ticket-common/basic/common"
+	"gitee.com/qianxunke/book-ticket-common/proto/auth"
+	"gitee.com/qianxunke/book-ticket-common/proto/user"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/client"
+	"log"
 	"net/http"
-	apiClient "surprise-shop-user_api/client"
-
-	"gitee.com/qianxunke/surprise-shop-common/protos/user/user_info"
 )
 
 func Init(client client.Client) *UserApiService {
 	return &UserApiService{
-		serviceClient: user_info.NewUserInfoService(basic.UserService, client),
+		serviceClient: user.NewUserInfoService(basic.UserService, client),
 	}
 }
 
 type UserApiService struct {
-	serviceClient user_info.UserInfoService
+	serviceClient user.UserInfoService
 }
 
 //登陆
 func (userApiService *UserApiService) Login(c *gin.Context) {
-	var reqInLogin user_info.InDoneUserLogin
+	var reqInLogin user.InDoneUserLogin
 	if err := c.ShouldBindJSON(&reqInLogin); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
@@ -38,7 +38,7 @@ func (userApiService *UserApiService) Login(c *gin.Context) {
 	response := &api_common.ResponseEntity{}
 	if rsp.Error.Code == http.StatusOK {
 		//将token写到cookies中去
-	//	c.Writer.Header().Add("Content-Type", "application/json;charset=utf-8")
+		//	c.Writer.Header().Add("Content-Type", "application/json;charset=utf-8")
 		c.Writer.Header().Add(common.RememberMeCookieName, rsp.Token)
 		// 过期30分钟
 		c.SetCookie(common.RememberMeCookieName, rsp.Token, 90000, "/", "", false, false)
@@ -57,13 +57,27 @@ func (userApiService *UserApiService) Login(c *gin.Context) {
 	}
 }
 
+type Register struct {
+	Nike_name         string `json:"nike_name"`
+	User_name         string `json:"user_name"`
+	Password          string `json:"password"`
+	Mobile_phone      string `json:"mobile_phone"`
+	User_email        string `json:"user_email"`
+	Verification_code string `json:"verification_code"`
+}
+
 //注册
 func (userApiService *UserApiService) Register(c *gin.Context) {
-	reqInRegister := &user_info.InDoneUserRegister{}
-	if err := c.ShouldBindJSON(&reqInRegister); err != nil {
+
+	register := &Register{}
+	log.Println("-------1------")
+	if err := c.ShouldBindJSON(&register); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
+	reqInRegister := user.InDoneUserRegister{Userinf: &user.UserInf{UserName: register.User_name, UserEmail: register.User_email, MobilePhone: register.Mobile_phone, Password: register.Password},
+		VerificationCode: register.Verification_code}
+	log.Printf("-------2------ %v\n", register)
 	//返回结果
 	response := &api_common.ResponseEntity{}
 	if reqInRegister.Userinf == nil || len(reqInRegister.VerificationCode) == 0 {
@@ -91,7 +105,7 @@ func (userApiService *UserApiService) Register(c *gin.Context) {
 		return
 	}
 	//调用后台服务
-	rsp, _ := userApiService.serviceClient.DoneUserRegister(context.TODO(), &user_info.InDoneUserRegister{
+	rsp, _ := userApiService.serviceClient.DoneUserRegister(context.TODO(), &user.InDoneUserRegister{
 		VerificationCode: reqInRegister.VerificationCode,
 		Userinf:          reqInRegister.Userinf,
 	})
@@ -124,7 +138,7 @@ func (userApiService *UserApiService) Logout(c *gin.Context) {
 		return
 	}
 	var err error
-	_, err = apiClient.AuthClient.DelUserAccessToken(context.TODO(), &auth.Request{
+	_, err = m_client.AuthClient.DelUserAccessToken(context.TODO(), &auth.Request{
 		Token: token,
 	})
 	if err != nil {
@@ -143,7 +157,7 @@ func (userApiService *UserApiService) Logout(c *gin.Context) {
 
 //获取验证码
 func (userApiService *UserApiService) GetCode(c *gin.Context) {
-	requestParams := &user_info.InGetVerificationCode{}
+	requestParams := &user.InGetVerificationCode{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
@@ -158,7 +172,7 @@ func (userApiService *UserApiService) GetCode(c *gin.Context) {
 
 //获取用户列表
 func (userApiService *UserApiService) GetUserInfoList(c *gin.Context) {
-	requestParams := &user_info.InGetUserInfoList{}
+	requestParams := &user.InGetUserInfoList{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
@@ -169,13 +183,14 @@ func (userApiService *UserApiService) GetUserInfoList(c *gin.Context) {
 
 //修改用户普通信息
 func (userApiService *UserApiService) UpdateUserInfo(c *gin.Context) {
-	requestParams := &user_info.InUpdateUserInfo{}
+	requestParams := &user.InUpdateUserInfo{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
-	var userId int64
-	if userId := api_common.GetHeadUserId(c); userId == -1 {
+	var userId string
+	if userId := api_common.GetHeadUserId(c); len(userId) == 0 {
+		api_common.SrvResultDone(c, nil, &api_common.Error{Code: http.StatusBadRequest, Message: "身份过期，请重新登陆"})
 		return
 	}
 	requestParams.UserInf.UserId = userId
@@ -185,12 +200,29 @@ func (userApiService *UserApiService) UpdateUserInfo(c *gin.Context) {
 
 //获取用户信息
 func (userApiService *UserApiService) GetUserInfo(c *gin.Context) {
-	requestParams := &user_info.InGetUserInfo{}
-	if requestParams.UserId = api_common.GetHeadUserId(c); requestParams.UserId == -1 {
+	requestParams := &user.InGetUserInfo{}
+	requestParams.UserId = api_common.GetHeadUserId(c)
+	if len(requestParams.UserId) == 0 {
 		api_common.SrvResultDone(c, nil, &api_common.Error{Code: http.StatusBadRequest, Message: "身份过期，请重新登陆"})
 		return
 	}
 	rsp, _ := userApiService.serviceClient.GetUserInfo(context.TODO(), requestParams)
 
 	api_common.SrvResultDone(c, rsp, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+}
+
+//修改用户普通信息
+func (userApiService *UserApiService) Login12306(c *gin.Context) {
+	requestParams := &user.In_Login12306{}
+	if err := c.ShouldBindJSON(&requestParams); err != nil {
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+		return
+	}
+	requestParams.UserId = api_common.GetHeadUserId(c)
+	if len(requestParams.UserId) == 0 {
+		api_common.SrvResultDone(c, nil, &api_common.Error{Code: http.StatusBadRequest, Message: "身份过期，请重新登陆"})
+		return
+	}
+	rsp, _ := userApiService.serviceClient.Login12306(context.TODO(), requestParams)
+	api_common.SrvResultDone(c, nil, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }

@@ -1,9 +1,9 @@
 package basic
 
-const name_space = "com.surprise.shop"
+const name_space = "com.book.ticket"
 
-//库存服务
-const InventoryService = name_space + ".srv.inventory"
+//抢票服务
+const BookTicketService = name_space + ".srv.book_ticket_srv"
 
 //订单服务
 const OrderService = name_space + ".srv.order"
@@ -18,4 +18,4 @@ const PaymentService = name_space + ".srv.payment"
 const UserService = name_space + ".srv.user"
 
 //搜索服务
-const EsService = name_space + ".srv.es"
+const QueryService = name_space + ".srv.query"

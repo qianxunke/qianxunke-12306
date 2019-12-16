@@ -3,12 +3,17 @@ package user_info
 import (
 	"book-user_srv/global"
 	checkutil "book-user_srv/utils"
-	"book-user_srv/utils/msm"
+	""
 	"context"
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic/common/uuid"
+	"gitee.com/qianxunke/book-ticket-common/notice/sms"
 	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	auth "gitee.com/qianxunke/book-ticket-common/proto/auth"
 	userInfoProto "gitee.com/qianxunke/book-ticket-common/proto/user"
+	bookBean "gitee.com/qianxunke/book-ticket-common/ticket/book/bean"
+	"gitee.com/qianxunke/book-ticket-common/ticket/book/boo_core"
+	"gitee.com/qianxunke/book-ticket-common/ticket/login"
 	"log"
 	"math/rand"
 	"net/http"
@@ -191,7 +196,7 @@ func (s *userInfoServiceImp) GetUserInfo(req *userInfoProto.InGetUserInfo) (rsp 
 	//获取某个用户的信息
 	DB := db.MasterEngine()
 	err := DB.Where("user_id = ?", req.UserId).First(&rsp.UserInf).Error
-	if err != nil && rsp.UserInf.UserId == 0 {
+	if err != nil || len(rsp.UserInf.UserId) == 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
 			Message: "没有找到任何数据！",
@@ -215,7 +220,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 	userInf := &userInfoProto.UserInf{}
 	DB := db.MasterEngine()
 	err := DB.Where(" mobile_phone = ? or user_name= ?", req.Userinf.MobilePhone, req.Userinf.UserName).First(&userInf).Error
-	if err == nil || userInf.UserId > 0 {
+	if err == nil || len(userInf.UserId)>0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
 			Message: "用户已存在",
@@ -229,7 +234,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 		}
 		return
 	}
-	err = verificationTelphone(req.Userinf.MobilePhone)
+	err = verificationTelphone(req.VerificationCode,req.Userinf.MobilePhone)
 	if err != nil {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
@@ -245,6 +250,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 		}
 		return
 	}
+	req.Userinf.UserId=uuid.GetUuid()
 	req.Userinf.Password = md5str
 	req.Userinf.UserStats = 1
 	req.Userinf.RegisterTime = time.Now().Format("2006-01-02 15:04:05")
@@ -260,7 +266,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 	}
 	rsp.UserInf = &userInfoProto.UserInf{}
 	err = DB.Where(" mobile_phone = ?", req.Userinf.MobilePhone).First(&rsp.UserInf).Error
-	if err != nil || rsp.UserInf.UserId <= 0 {
+	if err != nil || len(rsp.UserInf.UserId)<=0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusInternalServerError,
 			Message: "查询用户失败",
@@ -309,7 +315,7 @@ func (s *userInfoServiceImp) GetVerificationCode(req *userInfoProto.InGetVerific
 	}
 
 	//判断该手机验证码是否还有效
-	err := verificationTelphone(req.Telephone)
+	err := verificationCodeIsOk(req.Telephone)
 	if err == nil {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
@@ -328,7 +334,7 @@ func (s *userInfoServiceImp) GetVerificationCode(req *userInfoProto.InGetVerific
 		}
 		return
 	}
-	err = msm.SendRegisterMsm(int6, req.Telephone, global.RedisClient)
+	err = sms.SendRegisterMsm(int6, req.Telephone, global.RedisClient)
 	if err != nil {
 		rsp.Error = &userInfoProto.Error{
 			Message: err.Error(),
@@ -363,5 +369,129 @@ func (s *userInfoServiceImp) GetUserPassengerList(req *userInfoProto.In_GetUserP
 //修改用户联系人
 func (s *userInfoServiceImp) UpdateUserPassenger(req *userInfoProto.In_UpdateUserPassenger) (rsp *userInfoProto.Out_UpdateUserPassenger) {
 	//这里异步即可,不需要
+	return
+}
+
+func (s *userInfoServiceImp) Login12306(req *userInfoProto.In_Login12306) (rsp *userInfoProto.Out_Login12306) {
+	//判断用户在不在
+	rsp = &userInfoProto.Out_Login12306{}
+	DB := db.MasterEngine()
+	userInf := userInfoProto.UserInf{}
+	err := DB.Where(" user_id = ?", req.UserId).First(&userInf).Error
+	if err != nil {
+		rsp.Error = &userInfoProto.Error{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+		return
+	}
+	if len(userInf.UserId)==0{
+		rsp.Error = &userInfoProto.Error{
+			Code:    http.StatusBadRequest,
+			Message: "用户不存在",
+		}
+		return
+	}
+	userInf.TranUserAccount = req.TranUserAccount
+	userInf.TranUserPwd = req.TranUserPwd
+	//开始登陆12306
+	loginErrNum := 0
+	var loginResult *login.LoginResult
+	for true {
+		if loginErrNum > 3 {
+			break
+		}
+		t, err := login.LoginAndCheckToken(userInf)
+		if err != nil {
+			loginErrNum++
+		} else {
+			if t != nil {
+				loginResult = t
+				break
+			}
+		}
+		time.Sleep(time.Second * 3)
+	}
+	if loginErrNum <= 3 {
+		log.Println("登陆成功")
+	}
+	userInf.TranUserName=loginResult.Username
+	//修改用户12306账号和密码
+	DB.Model(&userInf).Where("user_id = ?",userInf.UserId).Updates(userInfoProto.UserInf{TranUserName: userInf.TranUserName, TranUserAccount: userInf.TranUserAccount,TranUserPwd:userInf.TranUserPwd})
+
+	//获取用户的联系人
+	presenterErrNum := 0
+	var presenterList []bookBean.Normal_passengers
+	for true {
+		if presenterErrNum > 3 {
+			break
+		}
+		subToken, _, err := boo_core.GetInitDc(loginResult.Conversat)
+		if err != nil {
+			presenterErrNum++
+			continue
+		}
+		ok, pData, err := boo_core.GetPassenger(http.MethodPost, loginResult.Conversat, subToken)
+		if ok {
+			if len(pData) > 0 {
+				presenterList = pData
+				break
+			}
+		}
+		time.Sleep(time.Second * 1)
+	}
+
+	if presenterErrNum > 3 {
+		rsp.Error = &userInfoProto.Error{
+			Code:    http.StatusInternalServerError,
+			Message: "登陆成功,但获取联系人失败",
+		}
+		return
+	}
+	//转化联系人
+	temp:=make([]userInfoProto.Passenger,len(presenterList))
+	for i,item:=range presenterList {
+		temp[i].Id=uuid.GetUuid()
+		temp[i].UserId=req.UserId
+		temp[i].AllEncStr=item.AllEncStr
+		temp[i].Address=item.Address
+		temp[i].BornDate=item.Born_date
+		temp[i].CountryCode=item.Country_code
+		temp[i].Email=item.Email
+		temp[i].FirstLetter=item.First_letter
+		temp[i].GatValidDateEnd=item.Gat_valid_date_end
+		temp[i].GatValidDateStart=item.Gat_valid_date_start
+		temp[i].GatVersion=item.Gat_version
+		temp[i].IndexId=item.Index_id
+		temp[i].IsAdult=item.IsAdult
+		temp[i].IsOldThan60=item.IsOldThan60
+		temp[i].IsYongThan10=item.IsYongThan10
+		temp[i].IsYongThan14=item.IsYongThan14
+		temp[i].MobileNo=item.Mobile_no
+		temp[i].PassengerFlag=item.Passenger_flag
+		temp[i].PassengerIdNo=item.Passenger_id_no
+		temp[i].PassengerIdTypeCode=item.Passenger_id_type_code
+		temp[i].PassengerIdTypeName=item.Passenger_id_type_name
+		temp[i].PassengerName=item.Passenger_name
+		temp[i].PassengerTypeName=item.Passenger_type_name
+		temp[i].PhoneNo=item.Phone_no
+		temp[i].Postalcode=item.Postalcode
+		temp[i].SexCode=item.Sex_code
+		temp[i].SexName=item.Sex_name
+		temp[i].TotalTimes=item.Total_times
+	}
+
+	//删除之前的信息
+	DB.Model(&userInfoProto.Passenger{}).Where("user_id = ?" ,userInf.UserId).Delete(&userInfoProto.Passenger{})
+
+    //写进去
+	for _,item:=range temp {
+		DB.Create(&item)
+	}
+
+	rsp.Error = &userInfoProto.Error{
+		Code:    http.StatusOK,
+		Message: "登陆成功",
+	}
 	return
 }

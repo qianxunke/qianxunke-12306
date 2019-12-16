@@ -31,7 +31,7 @@ func loginByUserName(req *userInfoProto.InDoneUserLogin, rsp *userInfoProto.OutD
 	rsp.UserInf = &userInfoProto.UserInf{}
 	DB := db.MasterEngine()
 	err := DB.Table("user_infs").Where("user_name = ?", req.UserName).Scan(&rsp.UserInf).Error
-	if err != nil || rsp.UserInf.UserId <= 0 {
+	if err != nil || len(rsp.UserInf.UserId) == 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
 			Message: "用户不存在！",
@@ -74,13 +74,13 @@ func loginByTelephone(req *userInfoProto.InDoneUserLogin, rsp *userInfoProto.Out
 	if len(req.MobilePhone) == 0 || len(req.VerificationCode) == 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
-			Message: "用户名或密码为空!",
+			Message: "手机号或验证码为空!",
 		}
 		isOk = false
 		return
 	}
 	//判断该手机验证码是否还有效
-	err := verificationTelphone(req.MobilePhone)
+	err := verificationTelphone(req.VerificationCode, req.MobilePhone)
 	if err != nil {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
@@ -92,7 +92,7 @@ func loginByTelephone(req *userInfoProto.InDoneUserLogin, rsp *userInfoProto.Out
 	rsp.UserInf = &userInfoProto.UserInf{}
 	DB := db.MasterEngine()
 	err = DB.Table("user_infs").Where("mobile_phone = ?", req.MobilePhone).Scan(&rsp.UserInf).Error
-	if err != nil || rsp.UserInf.UserId <= 0 {
+	if err != nil || len(rsp.UserInf.UserId) == 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
 			Message: "用户不存在！",
@@ -110,19 +110,38 @@ func loginByTelephone(req *userInfoProto.InDoneUserLogin, rsp *userInfoProto.Out
 	return
 }
 
-func verificationTelphone(telephone string) (err error) {
+func verificationTelphone(incode string, telephone string) (err error) {
 	if len(telephone) == 0 {
 		err = errors.New("电话号码为空")
 		return
 	}
 	//从redis 获取验证码
 	code, err := global.RedisClient.Do("GET", telephone).Int64()
-	if err != nil || code <= 0 {
+	if err != nil {
 		//将redis令牌清除
 		err = errors.New("验证码已过期")
 		return
 	}
+	cd := fmt.Sprintf("%d", code)
+	if cd != incode {
+		err = errors.New("验证码已过期")
+		return
+	}
+	return
+}
 
+func verificationCodeIsOk(telephone string) (err error) {
+	if len(telephone) == 0 {
+		err = errors.New("电话号码为空")
+		return
+	}
+	//从redis 获取验证码
+	code, err := global.RedisClient.Do("GET", telephone).Int64()
+	if err != nil || code == 0 {
+		//将redis令牌清除
+		err = errors.New("验证码已过期")
+		return
+	}
 	return
 }
 

@@ -3,8 +3,9 @@ module gitee.com/qianxunke/book-ticket-common
 go 1.13
 
 require (
-	gitee.com/qianxunke/surprise-shop-common v1.0.1 // indirect
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
+	github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190808125512-07798873deee
+	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-log/log v0.1.0
 	github.com/go-redis/redis v6.15.6+incompatible
@@ -21,4 +22,7 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/uber/jaeger-client-go v2.20.1+incompatible
+	github.com/uber/jaeger-lib v2.2.0+incompatible // indirect
 )
+
+replace gitee.com/qianxunke/book-ticket-common => ../book-ticket-common

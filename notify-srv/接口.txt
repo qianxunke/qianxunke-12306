@@ -1,0 +1,40 @@
+获取验证码：
+GET /user/code
+{
+   "telephone": "18334142052",
+   “code”: “”
+}
+
+注册：
+POST  /user/register
+{
+  "nike_name":"千寻客",
+   "user_name":"10010",
+   "password":"123456",
+   "mobile_phone":"18334142052",
+    "user_email":"736567805@qq.com",
+  "verification_code":"770304"
+}
+
+//登陆
+POST  /user/register
+{
+   "user_name":"",
+    "password":"",
+    "verification_code":"",
+     "mobile_phone":"",
+     "login_type":"2"    //1 账户密码 2验证码登陆
+}
+//12306账户登陆  同步用户的联系人
+POST  /user/login12306
+ {
+ "user_id":"a773b4c0-666f-4f4a-876a-1e3ed840b5e1",
+ "tran_user_account":"dh17862709691",
+ "tran_user_pwd":"736567805"
+ }
+
+ //查询火车
+ GET /query/train/list?train_date=2019-12-16&find_from=北京&find_to=上海&purpose_codes=ADULT
+
+
+ //

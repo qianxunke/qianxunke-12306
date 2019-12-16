@@ -1,21 +1,21 @@
 package main
 
 import (
+	"book-user_api/handler"
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic"
+	"gitee.com/qianxunke/book-ticket-common/basic/common"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/lib/tracer"
+	"gitee.com/qianxunke/book-ticket-common/basic/lib/wrapper/tracer/opentracing/gin2micro"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/cli"
 	"github.com/micro/go-micro/registry"
-	"github.com/micro/go-plugins/registry/consul"
 	"github.com/micro/go-micro/util/log"
 	"github.com/micro/go-micro/web"
 	"github.com/micro/go-plugins/config/source/grpc"
+	"github.com/micro/go-plugins/registry/consul"
 	"github.com/opentracing/opentracing-go"
-	"gitee.com/qianxunke/surprise-shop-common/basic"
-	"gitee.com/qianxunke/surprise-shop-common/basic/common"
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
-	"gitee.com/qianxunke/surprise-shop-common/basic/lib/tracer"
-	"gitee.com/qianxunke/surprise-shop-common/basic/lib/wrapper/tracer/opentracing/gin2micro"
-	"surprise-shop-user_api/handler"
 	"time"
 )
 

@@ -1,11 +1,9 @@
 package api_common
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/util/log"
 	"net/http"
-	"strconv"
 )
 
 type ResponseEntity struct {
@@ -72,12 +70,7 @@ func SrvResultDone(c *gin.Context, data interface{}, srvErr *Error) {
 }
 
 //获取用户ID
-func GetHeadUserId(c *gin.Context) (userId int64) {
+func GetHeadUserId(c *gin.Context) (userId string) {
 	userIdString := c.Request.Header.Get("userId")
-	userId, err := strconv.ParseInt(userIdString, 10, 64)
-	if err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
-		return -1
-	}
-	return userId
+	return userIdString
 }

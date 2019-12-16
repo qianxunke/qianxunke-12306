@@ -3,7 +3,7 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
-	"gitee.com/qianxunke/surprise-shop-common/basic/config"
+	"gitee.com/qianxunke/book-ticket-common/basic/config"
 	"github.com/kataras/golog"
 	"github.com/micro/go-micro/util/log"
 	"github.com/olivere/elastic/v7"

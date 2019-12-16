@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	status_code "gitee.com/qianxunke/surprise-shop-common/basic/lib/http"
+	status_code "gitee.com/qianxunke/book-ticket-common/basic/lib/http"
 	"github.com/micro/go-micro/metadata"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"

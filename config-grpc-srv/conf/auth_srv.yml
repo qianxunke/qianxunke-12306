@@ -1,6 +1,6 @@
 auth_srv:
   auth_srv_app:
-    name: com.surprise.shop.srv.auth
+    name: com.book.ticket.srv.auth
     address: 127.0.0.1
     port: 9091
   consul:
