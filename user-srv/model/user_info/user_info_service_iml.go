@@ -218,7 +218,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 	rsp = &userInfoProto.OutDoneUserRegister{}
 	userInf := &userInfoProto.UserInf{}
 	DB := db.MasterEngine()
-	err := DB.Where(" mobile_phone = ? or user_name= ?", req.Userinf.MobilePhone, req.Userinf.UserName).First(&userInf).Error
+	err := DB.Where(" mobile_phone = ?", req.Userinf.MobilePhone, req.Userinf.UserName).First(&userInf).Error
 	if err == nil || len(userInf.UserId) > 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
