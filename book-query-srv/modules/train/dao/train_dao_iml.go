@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	ticketProto "gitee.com/qianxunke/book-ticket-common/proto/ticket"
+	r "github.com/go-redis/redis"
 	"log"
 )
 
@@ -75,4 +76,7 @@ func (dao *ticketDaoIml) Update(product *ticketProto.Train) (err error) {
 	DB := db.MasterEngine()
 	err = DB.Model(&ticketProto.Train{}).Where("secret_str = ?", product.SecretStr).Updates(&product).Error
 	return
+}
+func (dao *ticketDaoIml) GetRedisClient() (r *r.Client) {
+	return redisClient
 }

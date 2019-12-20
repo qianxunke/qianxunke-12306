@@ -284,6 +284,10 @@ func DoneGo(ta task.Task) (err error) {
 			return
 		}
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
+		if !timeIsOk() {
+			_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
+			return
+		}
 		for i := 0; i < len(days); i++ {
 			trans, err := queryTrainMessage(conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
 			if err != nil {
@@ -368,7 +372,11 @@ func DoneGo(ta task.Task) (err error) {
 
 func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFrom string, FindTo string, Type string) (tran []bean.Train, err error) {
 	//ADULT
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+"A"+"?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
+	q, err := redisClient.Get("QueryEnd").Result()
+	if err != nil {
+		q = ""
+	}
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+q+"?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := con.Client.Do(req1)

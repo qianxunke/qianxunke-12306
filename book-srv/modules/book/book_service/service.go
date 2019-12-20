@@ -2,7 +2,9 @@ package book_service
 
 import (
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/plugins/redis"
 	"gitee.com/qianxunke/book-ticket-common/proto/task"
+	r "github.com/go-redis/redis"
 	"sync"
 )
 
@@ -10,8 +12,9 @@ type service struct {
 }
 
 var (
-	s *service
-	m sync.RWMutex
+	s           *service
+	m           sync.RWMutex
+	redisClient *r.Client
 )
 
 type Service interface {
@@ -50,5 +53,6 @@ func Init() {
 	if s != nil {
 		return
 	}
+	redisClient = redis.Redis()
 	s = &service{}
 }

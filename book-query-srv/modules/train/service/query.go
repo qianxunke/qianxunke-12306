@@ -21,7 +21,7 @@ import (
  *   用户信息
  * @return
  */
-func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*ticket.Train, err error) {
+func (s *service) queryTrainMessage(q string, que ticket.In_GetTrainInfoList) (tran []*ticket.Train, err error) {
 	conversation2 := &conversation.Conversation{}
 	conversation2.Client = &http.Client{}
 	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/otn/leftTicket/init", nil)
@@ -37,7 +37,7 @@ func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*tic
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
 	//ADULT
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+"A?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+q+"?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
 	http_util.AddReqCookie(conversation2.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := conversation2.Client.Do(req1)

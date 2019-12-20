@@ -30,6 +30,8 @@ type TicketDao interface {
 	Delete(ids []string) (err error)
 
 	Update(product *ticketProto.Train) (err error)
+
+	GetRedisClient() (r *r.Client)
 }
 
 func GetTicketDao() (TicketDao, error) {

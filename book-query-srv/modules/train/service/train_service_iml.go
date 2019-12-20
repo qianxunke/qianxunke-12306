@@ -95,7 +95,11 @@ func (s *service) GetTrainInfoList(req *ticketProto.In_GetTrainInfoList) (rsp *t
 	if err != nil || len(value) == 0 {
 		log.Logf("ERROR: %v", err)
 		//从12306查询
-		rsp.TrainList, err = s.queryTrainMessage(*req)
+		q, err := dao.GetRedisClient().Get("QueryEnd").Result()
+		if err != nil {
+			q = ""
+		}
+		rsp.TrainList, err = s.queryTrainMessage(q, *req)
 		if err != nil {
 			log.Logf("ERROR: %v\n", err)
 		} else {
