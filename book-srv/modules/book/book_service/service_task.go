@@ -374,7 +374,7 @@ func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFro
 	//ADULT
 	q, err := redisClient.Get("QueryEnd").Result()
 	if err != nil {
-		q = ""
+		q = "Z"
 	}
 	req1, _ := http.NewRequest(http.MethodGet, api.Query+q+"?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
 	http_util.AddReqCookie(con.C, req1)

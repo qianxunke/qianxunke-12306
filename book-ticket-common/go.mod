@@ -4,11 +4,11 @@ go 1.13
 
 require (
 	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
-	github.com/aliyun/alibaba-cloud-sdk-go v0.0.0-20190808125512-07798873deee
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-log/log v0.1.0
 	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/go-redis/redis/v7 v7.0.0-beta.4
 	github.com/goinggo/mapstructure v0.0.0-20140717182941-194205d9b4a9
 	github.com/golang/protobuf v1.3.2
 	github.com/jinzhu/gorm v1.9.11

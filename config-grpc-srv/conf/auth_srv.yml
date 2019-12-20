@@ -10,7 +10,7 @@ auth_srv:
   redis:
     enabled: true
     conn: 127.0.0.1:6379
-    dbNum: 8
+    dbNum: 0
     password:
     timeout: 6000
     sentinel:

@@ -28,7 +28,7 @@ func (dao *ticketDaoIml) Insert(train []*ticketProto.Train) (err error) {
 	if errs != nil {
 		fmt.Println(errs.Error())
 	}
-	err = redisClient.Set(train[0].TrainDate+"_"+train[0].FindFrom+"_"+train[0].FindTo+"_"+train[0].PurposeCodes, string(jsons), tokenExpiredDate).Err()
+	err = redisClient.Do("SET", train[0].TrainDate+"_"+train[0].FindFrom+"_"+train[0].FindTo+"_"+train[0].PurposeCodes, string(jsons), tokenExpiredDate).Err()
 	if err != nil {
 		log.Println("[Insert] error : " + err.Error())
 	}
@@ -42,7 +42,7 @@ func (dao *ticketDaoIml) SimpleQuery(findFrom string, findTo string, trainDate s
 			log.Println("[SimpleQuery] error : " + err.Error())
 		}
 	}()
-	value, err = redisClient.Get(trainDate + "_" + findFrom + "_" + findTo + "_" + purposeCodes).Result()
+	value, err = redisClient.Do("GET", trainDate+"_"+findFrom+"_"+findTo+"_"+purposeCodes).String()
 	if err != nil {
 		log.Println("[SimpleQuery] error : " + err.Error())
 	}

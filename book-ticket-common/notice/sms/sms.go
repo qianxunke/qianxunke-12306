@@ -54,7 +54,7 @@ func SendRegisterMsm(code int64, phone string, rc *r.Client) (err error) {
 		user,
 		getMd5Pwd(password),
 		phone,
-		"您的验证码为"+strconv.FormatInt(code, 10)+"在3分钟内有效，请不要告诉任何人哦",
+		sign+"您的验证码为 "+strconv.FormatInt(code, 10)+" 在3分钟内有效，请不要告诉任何人哦",
 	)
 	println("----" + smsapi + url)
 	rsp, err := http.Get(smsapi + url)
