@@ -1,6 +1,8 @@
 package api_common
 
 import (
+	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic/utils/string_utl"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/util/log"
 	"net/http"
@@ -31,12 +33,12 @@ func SrvResultListDone(c *gin.Context, data interface{}, limit int64, pages int6
 	if srvErr.Code == http.StatusInternalServerError {
 		log.Logf("Err: %v", srvErr)
 		response.Message = "服务端异常，请稍后再试"
-		response.Code = http.StatusOK
+		response.Code = http.StatusInternalServerError
 		c.AbortWithStatusJSON(http.StatusOK, response)
 	}
 	if srvErr.Code != http.StatusOK {
 		response.Message = srvErr.Message
-		response.Code = http.StatusOK
+		response.Code, _ = string_utl.StringToInt64(fmt.Sprintf("%d", srvErr.Code))
 		c.AbortWithStatusJSON(http.StatusOK, response)
 	} else {
 		response.Message = srvErr.Message
@@ -54,12 +56,12 @@ func SrvResultDone(c *gin.Context, data interface{}, srvErr *Error) {
 	if srvErr.Code == http.StatusInternalServerError {
 		log.Logf("Err: %v", srvErr)
 		response.Message = "服务端异常，请稍后再试"
-		response.Code = http.StatusOK
+		response.Code = http.StatusInternalServerError
 		c.AbortWithStatusJSON(http.StatusOK, response)
 	}
 	if srvErr.Code != http.StatusOK {
 		response.Message = srvErr.Message
-		response.Code = http.StatusOK
+		response.Code, _ = string_utl.StringToInt64(fmt.Sprintf("%d", srvErr.Code))
 		c.AbortWithStatusJSON(http.StatusOK, response)
 	} else {
 		response.Message = srvErr.Message
