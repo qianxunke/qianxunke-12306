@@ -31,13 +31,13 @@ func SrvResultListDone(c *gin.Context, data interface{}, limit int64, pages int6
 	if srvErr.Code == http.StatusInternalServerError {
 		log.Logf("Err: %v", srvErr)
 		response.Message = "服务端异常，请稍后再试"
-		response.Code = http.StatusInternalServerError
-		c.AbortWithStatusJSON(http.StatusInternalServerError, response)
+		response.Code = http.StatusOK
+		c.AbortWithStatusJSON(http.StatusOK, response)
 	}
 	if srvErr.Code != http.StatusOK {
 		response.Message = srvErr.Message
-		response.Code = http.StatusBadRequest
-		c.AbortWithStatusJSON(http.StatusBadRequest, response)
+		response.Code = http.StatusOK
+		c.AbortWithStatusJSON(http.StatusOK, response)
 	} else {
 		response.Message = srvErr.Message
 		response.Code = http.StatusOK
@@ -54,13 +54,13 @@ func SrvResultDone(c *gin.Context, data interface{}, srvErr *Error) {
 	if srvErr.Code == http.StatusInternalServerError {
 		log.Logf("Err: %v", srvErr)
 		response.Message = "服务端异常，请稍后再试"
-		response.Code = http.StatusBadRequest
-		c.AbortWithStatusJSON(http.StatusBadRequest, response)
+		response.Code = http.StatusOK
+		c.AbortWithStatusJSON(http.StatusOK, response)
 	}
 	if srvErr.Code != http.StatusOK {
 		response.Message = srvErr.Message
-		response.Code = http.StatusBadRequest
-		c.AbortWithStatusJSON(http.StatusBadRequest, response)
+		response.Code = http.StatusOK
+		c.AbortWithStatusJSON(http.StatusOK, response)
 	} else {
 		response.Message = srvErr.Message
 		response.Code = http.StatusOK
