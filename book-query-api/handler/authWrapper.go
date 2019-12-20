@@ -3,12 +3,10 @@ package handler
 import (
 	"book-query-api/m_client"
 	"context"
-	"gitee.com/qianxunke/book-ticket-common/basic/api_common"
 	"gitee.com/qianxunke/book-ticket-common/basic/common"
 	"gitee.com/qianxunke/book-ticket-common/proto/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/util/log"
-	"net/http"
 )
 
 // AuthWrapper 认证wrapper
@@ -28,29 +26,33 @@ func AuthWrapper(c *gin.Context) {
 		}
 		c.Next()
 	} else {
-		ck := c.Request.Header.Get(common.RememberMeCookieName)
-		if len(ck) == 0 {
-			resonseEntity := &api_common.ResponseEntity{}
-			resonseEntity.Message = "身份验证不通过，请先登陆!"
-			resonseEntity.Code = http.StatusBadRequest
-			c.JSON(http.StatusBadRequest, resonseEntity)
-			c.Abort()
-			return
-		}
-		tokenRsp, err := m_client.AuthClient.AuthenticationFromToken(context.TODO(), &auth.Request{
-			Token: ck,
-		})
-		if err == nil && tokenRsp.Success {
-			c.Request.Header.Add("userId", tokenRsp.UserId)
-			c.Next()
-		} else {
-			log.Logf("[AuthWrapper]，token不合法，无用户id")
-			resonseEntity := &api_common.ResponseEntity{}
-			resonseEntity.Message = "身份验证不通过，请先登陆!"
-			resonseEntity.Code = http.StatusBadRequest
-			c.JSON(http.StatusBadRequest, resonseEntity)
-			c.Abort()
-			return
-		}
+		c.Next()
+		/*
+			ck := c.Request.Header.Get(common.RememberMeCookieName)
+			if len(ck) == 0 {
+				resonseEntity := &api_common.ResponseEntity{}
+				resonseEntity.Message = "身份验证不通过，请先登陆!"
+				resonseEntity.Code = http.StatusBadRequest
+				c.JSON(http.StatusBadRequest, resonseEntity)
+				c.Abort()
+				return
+			}
+			tokenRsp, err := m_client.AuthClient.AuthenticationFromToken(context.TODO(), &auth.Request{
+				Token: ck,
+			})
+			if err == nil && tokenRsp.Success {
+				c.Request.Header.Add("userId", tokenRsp.UserId)
+				c.Next()
+			} else {
+				log.Logf("[AuthWrapper]，token不合法，无用户id")
+				resonseEntity := &api_common.ResponseEntity{}
+				resonseEntity.Message = "身份验证不通过，请先登陆!"
+				resonseEntity.Code = http.StatusBadRequest
+				c.JSON(http.StatusBadRequest, resonseEntity)
+				c.Abort()
+				return
+			}
+
+		*/
 	}
 }

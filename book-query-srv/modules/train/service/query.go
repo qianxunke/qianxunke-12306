@@ -37,7 +37,7 @@ func (s *service) queryTrainMessage(qq string, que ticket.In_GetTrainInfoList) (
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
 	//ADULT
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+qq+"?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+"Z?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
 	http_util.AddReqCookie(conversation2.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := conversation2.Client.Do(req1)
@@ -64,8 +64,6 @@ func (s *service) queryTrainMessage(qq string, que ticket.In_GetTrainInfoList) (
 				log.Printf("[QueryTrainMessage] error %v", err)
 				return tran, err
 			}
-			//	printTrainMessage(trans[5:6])
-			//	log.Println("ser : " + queryItem.Data.Result[0])
 			return trans, nil
 		}
 	} else {
