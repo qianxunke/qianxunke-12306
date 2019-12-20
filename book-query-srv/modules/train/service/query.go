@@ -37,7 +37,7 @@ func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*tic
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
 	//ADULT
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+"A?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+stations.GetStationValueByKey(que.FindFrom)+"&leftTicketDTO.to_station="+stations.GetStationValueByKey(que.FindTo)+"&purpose_codes="+que.PurposeCodes, nil)
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+"A?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
 	http_util.AddReqCookie(conversation2.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := conversation2.Client.Do(req1)
@@ -51,12 +51,11 @@ func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*tic
 		return tran, err
 	}
 	defer rsp1.Body.Close()
-	log.Printf("[QueryTrainMessage]  %s", string(str))
 	if rsp1.StatusCode == http.StatusOK {
 		queryItem := &QueryItem{}
 		err = json.Unmarshal(str, &queryItem)
 		if err != nil {
-			log.Printf("[QueryTrainMessage] error %v", err)
+			log.Printf("[QueryTrainMessage] error %v", string(str))
 			return tran, err
 		}
 		if len(queryItem.Data.Result) > 0 {
@@ -65,8 +64,8 @@ func (s *service) queryTrainMessage(que ticket.In_GetTrainInfoList) (tran []*tic
 				log.Printf("[QueryTrainMessage] error %v", err)
 				return tran, err
 			}
-			printTrainMessage(trans[5:6])
-			log.Println("ser : " + queryItem.Data.Result[5])
+			//	printTrainMessage(trans[5:6])
+			//	log.Println("ser : " + queryItem.Data.Result[0])
 			return trans, nil
 		}
 	} else {

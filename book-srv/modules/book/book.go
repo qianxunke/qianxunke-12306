@@ -14,4 +14,5 @@ func Init() {
 		log.Fatal(err.Error())
 	}
 	go s.StartBathTicket()
+	go s.StartBathDoneError()
 }

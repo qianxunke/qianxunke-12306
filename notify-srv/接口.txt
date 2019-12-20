@@ -8,12 +8,12 @@ GET /user/code
 注册：
 POST  /user/register
 {
-  "nike_name":"千寻客",
+   "nike_name":"千寻客",
    "user_name":"10010",
    "password":"123456",
    "mobile_phone":"18334142052",
     "user_email":"736567805@qq.com",
-  "verification_code":"770304"
+    "verification_code":"770304"
 }
 
 //登陆

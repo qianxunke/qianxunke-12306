@@ -22,10 +22,18 @@ type Service interface {
 	//获取列表
 	GetTasks(req *task.In_GetTaskInfoList) (rsp *task.Out_GetTaskInfoList)
 	//获取需要抢的列表
-	GetNeedTicketList(limit int64, pages int64, status int64) (rsp []task.TaskDetails, err error)
+	GetNeedTicketList(limit int64, pages int64, status int64) (rsp []task.Task, err error)
 	//新建信息
 	CreateTask(req *task.In_AddTask) (rsp *task.Out_AddTask)
+
 	StartBathTicket()
+
+	StartBathDoneError()
+
+	//获取用户列表
+	GetUserTaskList(req *task.In_GetUserTaskList) (rsp *task.Out_GetTaskInfoList)
+	//修改信息
+	UpdateTaskStatus(req *task.In_UpdateTaskStatus) (rsp *task.Out_UpdateTaskStatus)
 }
 
 //获取服务

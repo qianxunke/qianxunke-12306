@@ -8,6 +8,7 @@ import (
 	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	userInfoProto "gitee.com/qianxunke/book-ticket-common/proto/user"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -91,7 +92,7 @@ func loginByTelephone(req *userInfoProto.InDoneUserLogin, rsp *userInfoProto.Out
 	}
 	rsp.UserInf = &userInfoProto.UserInf{}
 	DB := db.MasterEngine()
-	err = DB.Table("user_infs").Where("mobile_phone = ?", req.MobilePhone).Scan(&rsp.UserInf).Error
+	err = DB.Model(&userInfoProto.UserInf{}).Where("mobile_phone = ?", req.MobilePhone).Scan(&rsp.UserInf).Error
 	if err != nil || len(rsp.UserInf.UserId) == 0 {
 		rsp.Error = &userInfoProto.Error{
 			Code:    http.StatusBadRequest,
@@ -137,6 +138,7 @@ func verificationCodeIsOk(telephone string) (err error) {
 	}
 	//从redis 获取验证码
 	code, err := global.RedisClient.Do("GET", telephone).Int64()
+	log.Println("code :" + fmt.Sprintf("%d", code))
 	if err != nil || code == 0 {
 		//将redis令牌清除
 		err = errors.New("验证码已过期")

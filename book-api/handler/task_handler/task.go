@@ -4,6 +4,7 @@ import (
 	"context"
 	"gitee.com/qianxunke/book-ticket-common/basic"
 	"gitee.com/qianxunke/book-ticket-common/basic/api_common"
+	"gitee.com/qianxunke/book-ticket-common/basic/utils/string_utl"
 	"gitee.com/qianxunke/book-ticket-common/proto/task"
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro/client"
@@ -46,5 +47,29 @@ func (api *ApiService) GetTask(c *gin.Context) {
 	}
 	req.TaskId = Id
 	rsp, _ := api.serviceClient.GetTaskInfo(context.TODO(), req)
+	api_common.SrvResultDone(c, nil, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+}
+
+func (api *ApiService) GetUserTask(c *gin.Context) {
+	req := &task.In_GetUserTaskList{}
+	req.UserId = c.Request.Header.Get("userId")
+	if len(req.UserId) <= 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
+		return
+	}
+	rsp, _ := api.serviceClient.GetUserTaskList(context.TODO(), req)
+	api_common.SrvResultListDone(c, rsp.TaskDetailsList, 0, 0, rsp.Total, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+}
+
+func (api *ApiService) UpdateTaskStatus(c *gin.Context) {
+	req := &task.In_UpdateTaskStatus{}
+	req.TaskId = c.DefaultQuery("taskId", "")
+	status := c.DefaultQuery("status", "-1")
+	if len(req.TaskId) <= 0 || status == "-1" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
+		return
+	}
+	req.Status, _ = string_utl.StringToInt64(status)
+	rsp, _ := api.serviceClient.UpdateTaskStatus(context.TODO(), req)
 	api_common.SrvResultDone(c, nil, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }

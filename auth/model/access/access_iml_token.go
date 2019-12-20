@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	// tokenExpiredDate app token过期日期 30天
+	// tokenExpiredDate app token过期日期 7天
 	tokenExpiredDate = 3600 * 24 * 7 * time.Second
 	// tokenIDKeyPrefix tokenID 前缀
 	tokenIDKeyPrefix  = "token:auth:id:"

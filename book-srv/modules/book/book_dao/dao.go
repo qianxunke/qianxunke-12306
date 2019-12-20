@@ -28,7 +28,15 @@ type TaskDao interface {
 
 	Update(task *task.TaskDetails) (err error)
 
-	TicketQuery(limit int64, pages int64, status int64) (rsp []task.TaskDetails, err error)
+	TicketQuery(limit int64, pages int64, status int64) (rsp []task.Task, err error)
+
+	GetUserTask(userId string) (rsp *task.Out_GetTaskInfoList, err error)
+
+	UpdateStatus(task_id string, status int64) (err error)
+
+	GetTask(task_id string) (ta *task.Task, err error)
+
+	ExceptionQuery(limit int64, pages int64) (rsp []task.Task, err error)
 }
 
 func GetDao() (TaskDao, error) {

@@ -32,6 +32,7 @@ func (userApiService *UserApiService) Login(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
+	log.Printf("reqInLogin : %v\n", reqInLogin)
 	//调用后台服务
 	rsp, _ := userApiService.serviceClient.DoneUserLogin(context.TODO(), &reqInLogin)
 	//返回结果
@@ -166,19 +167,26 @@ func (userApiService *UserApiService) GetCode(c *gin.Context) {
 		api_common.SrvResultDone(c, nil, &api_common.Error{Code: http.StatusBadRequest, Message: "手机号码不能为空"})
 		return
 	}
+	log.Printf("requestParams : %v\n", requestParams)
 	rsp, _ := userApiService.serviceClient.GetVerificationCode(context.TODO(), requestParams)
 	api_common.SrvResultDone(c, nil, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }
 
 //获取用户列表
 func (userApiService *UserApiService) GetUserInfoList(c *gin.Context) {
-	requestParams := &user.InGetUserInfoList{}
-	if err := c.ShouldBindJSON(&requestParams); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
-		return
-	}
-	rsp, _ := userApiService.serviceClient.GetUserInfoList(context.TODO(), requestParams)
-	api_common.SrvResultListDone(c, rsp.UserInfList, rsp.Limit, rsp.Pages, rsp.Total, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+	//	requestParams := &user.InGetUserInfoList{}
+	/*
+		if err := c.ShouldBindJSON(&requestParams); err != nil {
+			_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+			return
+		}
+
+	*/
+
+	_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+
+	//	rsp, _ := userApiService.serviceClient.GetUserInfoList(context.TODO(), requestParams)
+	//	api_common.SrvResultListDone(c, rsp.UserInfList, rsp.Limit, rsp.Pages, rsp.Total, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }
 
 //修改用户普通信息
@@ -225,4 +233,17 @@ func (userApiService *UserApiService) Login12306(c *gin.Context) {
 	}
 	rsp, _ := userApiService.serviceClient.Login12306(context.TODO(), requestParams)
 	api_common.SrvResultDone(c, nil, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+}
+
+//获取用户列表
+func (userApiService *UserApiService) GetUserPresenters(c *gin.Context) {
+	requestParams := &user.In_GetUserPassengerList{}
+	userId := api_common.GetHeadUserId(c)
+	if len(userId) == 0 {
+		api_common.SrvResultDone(c, nil, &api_common.Error{Code: http.StatusBadRequest, Message: "身份过期，请重新登陆"})
+		return
+	}
+	requestParams.UserId = userId
+	rsp, _ := userApiService.serviceClient.GetUserPassengerList(context.TODO(), requestParams)
+	api_common.SrvResultListDone(c, rsp.PassengerList, 0, 0, 0, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }

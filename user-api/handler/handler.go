@@ -42,6 +42,7 @@ func RegiserRouter(service web.Service, router *gin.Engine) {
 		userRout.POST("/list", apiService.GetUserInfoList)
 		userRout.GET("/info", apiService.GetUserInfo)
 		userRout.POST("/login12306", apiService.Login12306)
+		userRout.GET("/presenters", apiService.GetUserPresenters)
 
 	}
 	//user_level

@@ -42,6 +42,10 @@ type TaskService interface {
 	UpdateTaskInfo(ctx context.Context, in *In_UpdateTaskInfo, opts ...client.CallOption) (*Out_UpdateTaskInfo, error)
 	//新增信息
 	AddTask(ctx context.Context, in *In_AddTask, opts ...client.CallOption) (*Out_AddTask, error)
+	//获取票列表
+	GetUserTaskList(ctx context.Context, in *In_GetUserTaskList, opts ...client.CallOption) (*Out_GetTaskInfoList, error)
+	//修改信息
+	UpdateTaskStatus(ctx context.Context, in *In_UpdateTaskStatus, opts ...client.CallOption) (*Out_UpdateTaskStatus, error)
 }
 
 type taskService struct {
@@ -102,6 +106,26 @@ func (c *taskService) AddTask(ctx context.Context, in *In_AddTask, opts ...clien
 	return out, nil
 }
 
+func (c *taskService) GetUserTaskList(ctx context.Context, in *In_GetUserTaskList, opts ...client.CallOption) (*Out_GetTaskInfoList, error) {
+	req := c.c.NewRequest(c.name, "TaskService.GetUserTaskList", in)
+	out := new(Out_GetTaskInfoList)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskService) UpdateTaskStatus(ctx context.Context, in *In_UpdateTaskStatus, opts ...client.CallOption) (*Out_UpdateTaskStatus, error) {
+	req := c.c.NewRequest(c.name, "TaskService.UpdateTaskStatus", in)
+	out := new(Out_UpdateTaskStatus)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for TaskService service
 
 type TaskServiceHandler interface {
@@ -113,6 +137,10 @@ type TaskServiceHandler interface {
 	UpdateTaskInfo(context.Context, *In_UpdateTaskInfo, *Out_UpdateTaskInfo) error
 	//新增信息
 	AddTask(context.Context, *In_AddTask, *Out_AddTask) error
+	//获取票列表
+	GetUserTaskList(context.Context, *In_GetUserTaskList, *Out_GetTaskInfoList) error
+	//修改信息
+	UpdateTaskStatus(context.Context, *In_UpdateTaskStatus, *Out_UpdateTaskStatus) error
 }
 
 func RegisterTaskServiceHandler(s server.Server, hdlr TaskServiceHandler, opts ...server.HandlerOption) error {
@@ -121,6 +149,8 @@ func RegisterTaskServiceHandler(s server.Server, hdlr TaskServiceHandler, opts .
 		GetTaskInfoList(ctx context.Context, in *In_GetTaskInfoList, out *Out_GetTaskInfoList) error
 		UpdateTaskInfo(ctx context.Context, in *In_UpdateTaskInfo, out *Out_UpdateTaskInfo) error
 		AddTask(ctx context.Context, in *In_AddTask, out *Out_AddTask) error
+		GetUserTaskList(ctx context.Context, in *In_GetUserTaskList, out *Out_GetTaskInfoList) error
+		UpdateTaskStatus(ctx context.Context, in *In_UpdateTaskStatus, out *Out_UpdateTaskStatus) error
 	}
 	type TaskService struct {
 		taskService
@@ -147,4 +177,12 @@ func (h *taskServiceHandler) UpdateTaskInfo(ctx context.Context, in *In_UpdateTa
 
 func (h *taskServiceHandler) AddTask(ctx context.Context, in *In_AddTask, out *Out_AddTask) error {
 	return h.TaskServiceHandler.AddTask(ctx, in, out)
+}
+
+func (h *taskServiceHandler) GetUserTaskList(ctx context.Context, in *In_GetUserTaskList, out *Out_GetTaskInfoList) error {
+	return h.TaskServiceHandler.GetUserTaskList(ctx, in, out)
+}
+
+func (h *taskServiceHandler) UpdateTaskStatus(ctx context.Context, in *In_UpdateTaskStatus, out *Out_UpdateTaskStatus) error {
+	return h.TaskServiceHandler.UpdateTaskStatus(ctx, in, out)
 }

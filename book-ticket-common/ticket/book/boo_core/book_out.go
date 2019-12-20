@@ -8,6 +8,7 @@ import (
 	"gitee.com/qianxunke/book-ticket-common/ticket/query/bean"
 	"log"
 	"net/http"
+	"strings"
 )
 
 //下单
@@ -55,11 +56,59 @@ func Book(conversation conversation.Conversation, chooseTrain bean.Train, u task
 		log.Println("乘客信息请求失败...")
 		return
 	}
-	err = checkOrderInfo(http.MethodPost, &conversation, boolResult, u)
+	/**
+	    PASSENGER_TICKER_STR = {
+	      '一等座': 'M',
+	      '特等座': 'P',
+	      '二等座': 'O',
+	      '商务座': 9,
+	      '硬座': 1,
+	      '无座': 1,
+	      '软座': 2,
+	      '软卧': 4,
+	      '硬卧': 3,
+	  }
+	  //判断用户选择的座位
+	*/
+	var setType []string
+	if strings.Contains(boolResult.SelectTran.TrainCode, "G") || strings.Contains(boolResult.SelectTran.TrainCode, "D") {
+		if strings.Contains(u.Task.SeatTypes, "O") {
+			setType = append(setType, "O")
+		}
+		if strings.Contains(u.Task.SeatTypes, "M") {
+			setType = append(setType, "M")
+		}
+		if strings.Contains(u.Task.SeatTypes, "P") {
+			setType = append(setType, "P")
+		}
+		if strings.Contains(u.Task.SeatTypes, "9") {
+			setType = append(setType, "9")
+		}
+	} else {
+		if strings.Contains(u.Task.SeatTypes, "3") {
+			setType = append(setType, "3")
+		}
+		if strings.Contains(u.Task.SeatTypes, "4") {
+			setType = append(setType, "4")
+		}
+		if strings.Contains(u.Task.SeatTypes, "2") {
+			setType = append(setType, "2")
+		}
+		if strings.Contains(u.Task.SeatTypes, "1") {
+			setType = append(setType, "1")
+		}
+	}
+	for i := 0; i < len(setType); i++ {
+		err = checkOrderInfo(http.MethodPost, &conversation, boolResult, setType[i], u)
+		if err != nil {
+			log.Println("[checkOrderInfo] error :" + err.Error())
+		}
+	}
 	if err != nil {
 		log.Println("[checkOrderInfo] error :" + err.Error())
 		return
 	}
+
 	if !boolResult.CheckOrderInfo {
 		// bookResult=BookUtils.getQueueCount(bookResult);
 		log.Println("订单信息检查错误...")

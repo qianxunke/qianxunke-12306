@@ -7,6 +7,8 @@ import (
 	"gitee.com/qianxunke/book-ticket-common/plugins/db"
 	"gitee.com/qianxunke/book-ticket-common/proto/task"
 	"log"
+	"net/http"
+	"time"
 )
 
 func (dao *taskDaoIml) FindById(taskId string) (product *task.TaskDetails, err error) {
@@ -25,6 +27,7 @@ func (dao *taskDaoIml) FindById(taskId string) (product *task.TaskDetails, err e
 	return
 }
 
+//
 func (dao *taskDaoIml) Insert(product *task.TaskDetails) (err error) {
 	DB := db.MasterEngine()
 	DB.Begin()
@@ -36,6 +39,8 @@ func (dao *taskDaoIml) Insert(product *task.TaskDetails) (err error) {
 		}
 	}()
 	product.Task.TaskId = uuid.GetUuid()
+	product.Task.CreatedTime = time.Now().Unix()
+	product.Task.UpdateTime = product.Task.CreatedTime
 	err = DB.Create(&product.Task).Error
 	if err != nil {
 		DB.Rollback()
@@ -107,6 +112,36 @@ func (dao *taskDaoIml) SimpleQuery(limit int64, pages int64, status int64, key s
 	return
 }
 
+func (dao *taskDaoIml) GetUserTask(userId string) (rsp *task.Out_GetTaskInfoList, err error) {
+	rsp = &task.Out_GetTaskInfoList{}
+	DB := db.MasterEngine()
+	//先查询task
+	err = DB.Model(&task.Task{}).Where("user_id = ? ", userId).Count(&rsp.Total).Error
+	if err != nil {
+		return nil, err
+	}
+	if rsp.Total <= 0 {
+		rsp.Error = &task.Error{Code: http.StatusOK, Message: "没有任务"}
+		return
+	}
+	var tasks []*task.Task
+	err = DB.Where("user_id = ? ", userId).Order("created_time DESC").Find(&tasks).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range tasks {
+		var presenters []*task.TaskPassenger
+		err = DB.Where("task_id =  ?", item.TaskId).Find(&presenters).Error
+		if err != nil {
+			return nil, err
+		}
+		rsp.TaskDetailsList = append(rsp.TaskDetailsList, &task.TaskDetails{Task: item, TaskPassenger: presenters})
+	}
+	rsp.Error = &task.Error{Code: http.StatusOK, Message: "获取成功"}
+	return
+
+}
+
 func (dao *taskDaoIml) Delete(ids []int64) (err error) {
 	if len(ids) == 0 {
 		return
@@ -171,7 +206,7 @@ func (dao *taskDaoIml) Update(ta *task.TaskDetails) (err error) {
 	return
 }
 
-func (dao *taskDaoIml) TicketQuery(limit int64, pages int64, status int64) (rsp []task.TaskDetails, err error) {
+func (dao *taskDaoIml) TicketQuery(limit int64, pages int64, status int64) (rsp []task.Task, err error) {
 	DB := db.MasterEngine()
 	total := 0
 	offset := (pages - 1) * limit
@@ -181,20 +216,48 @@ func (dao *taskDaoIml) TicketQuery(limit int64, pages int64, status int64) (rsp 
 		return nil, err
 	}
 	if total <= 0 {
-		return make([]task.TaskDetails, 0), err
+		return make([]task.Task, 0), err
 	}
-	var tasks []*task.Task
-	err = DB.Where("status =  ?", status).Offset(offset).Limit(limit).Find(&tasks).Error
+	err = DB.Where("status =  ?", status).Offset(offset).Limit(limit).Find(&rsp).Error
 	if err != nil {
 		return nil, err
 	}
-	for _, item := range tasks {
-		var presenters []*task.TaskPassenger
-		err = DB.Where("task_id =  ?", item.TaskId).Find(&presenters).Error
-		if err != nil {
-			return nil, err
-		}
-		rsp = append(rsp, task.TaskDetails{Task: item, TaskPassenger: presenters})
+	return
+}
+
+func (dao *taskDaoIml) ExceptionQuery(limit int64, pages int64) (rsp []task.Task, err error) {
+	DB := db.MasterEngine()
+	total := 0
+	offset := (pages - 1) * limit
+	//先查询task
+	err = DB.Model(&task.Task{}).Where("status = 2 or status = 4").Count(&total).Error
+	if err != nil {
+		return nil, err
 	}
+	if total <= 0 {
+		return make([]task.Task, 0), err
+	}
+
+	err = DB.Where("status = 2 or status = 4").Offset(offset).Limit(limit).Find(&rsp).Error
+	return
+}
+
+func (dao *taskDaoIml) GetTask(task_id string) (ta *task.Task, err error) {
+	DB := db.MasterEngine()
+	ta = &task.Task{}
+	err = DB.Model(&task.Task{}).Where("task_id = ?", task_id).First(&ta).Error
+	if err != nil {
+		log.Printf("[Update] error %s", err.Error())
+	}
+	return
+}
+
+func (dao *taskDaoIml) UpdateStatus(task_id string, status int64) (err error) {
+	DB := db.MasterEngine()
+	err = DB.Model(&task.Task{}).Where("task_id = ?", task_id).Updates(task.Task{Status: status, UpdateTime: time.Now().Unix()}).Error
+	if err != nil {
+		log.Printf("[Update] error %s", err.Error())
+	}
+
 	return
 }

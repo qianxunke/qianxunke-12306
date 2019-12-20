@@ -6,6 +6,7 @@ import (
 	"gitee.com/qianxunke/book-ticket-common/proto/task"
 	"log"
 	"net/http"
+	"strings"
 )
 
 //获取信息
@@ -133,6 +134,20 @@ func (s *service) CreateTask(req *task.In_AddTask) (rsp *task.Out_AddTask) {
 			Message: err.Error(),
 		}
 	}
+	//判断当前任务是否可以直接开始
+	isCan := false
+	d_temp := strings.Split(req.TaskDetails.Task.TrainDates, ",")
+	for _, item := range d_temp {
+		d := isCanQuery(item)
+		if d > 0 && d < 30 {
+			isCan = true
+		}
+	}
+	if isCan {
+		req.TaskDetails.Task.Status = 1
+	} else {
+		req.TaskDetails.Task.Status = 4
+	}
 	err = dao.Insert(req.TaskDetails)
 	if err != nil {
 		rsp.Error = &task.Error{
@@ -147,7 +162,7 @@ func (s *service) CreateTask(req *task.In_AddTask) (rsp *task.Out_AddTask) {
 	}
 	return
 }
-func (s *service) GetNeedTicketList(limit int64, pages int64, status int64) (rsp []task.TaskDetails, err error) {
+func (s *service) GetNeedTicketList(limit int64, pages int64, status int64) (rsp []task.Task, err error) {
 
 	//对参数鉴权
 	if limit == 0 {
@@ -167,4 +182,34 @@ func (s *service) GetNeedTicketList(limit int64, pages int64, status int64) (rsp
 	rsp, err = dao.TicketQuery(limit, pages, status)
 	return
 
+}
+
+//获取用户列表
+func (s *service) GetUserTaskList(req *task.In_GetUserTaskList) (rsp *task.Out_GetTaskInfoList) {
+	dao, err := book_dao.GetDao()
+	if err != nil {
+		log.Printf("ERROR: %v", err)
+		return
+	}
+	rsp, err = dao.GetUserTask(req.UserId)
+	return
+}
+
+//修改信息
+func (s *service) UpdateTaskStatus(req *task.In_UpdateTaskStatus) (rsp *task.Out_UpdateTaskStatus) {
+
+	dao, err := book_dao.GetDao()
+	rsp = &task.Out_UpdateTaskStatus{}
+	if err != nil {
+		log.Printf("ERROR: %v", err)
+		rsp.Error = &task.Error{Code: http.StatusInternalServerError, Message: err.Error()}
+		return
+	}
+	err = dao.UpdateStatus(req.TaskId, req.Status)
+	if err != nil {
+		rsp.Error = &task.Error{Code: http.StatusInternalServerError, Message: err.Error()}
+	} else {
+		rsp.Error = &task.Error{Code: http.StatusOK, Message: "更新成功"}
+	}
+	return
 }

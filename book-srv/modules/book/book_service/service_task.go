@@ -3,7 +3,6 @@ package book_service
 import (
 	"book-srv/m_client"
 	"book-srv/modules/book/book_dao"
-	"book-srv/stations"
 	"context"
 	"encoding/json"
 	"errors"
@@ -21,18 +20,126 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 var (
-	taskChnnel chan task.TaskDetails
+	taskChnnel chan task.Task
 	taskOpen   chan bool
+
+	errorChnnel chan task.Task
+	errorOpen   chan bool
 )
+
+//1.时间过了就不用抢
+//2.还不放票的日期不能抢 （需要弄个缓存，redis
+//3.多个时间需要循环判断一下，
+//4.多个车次循环判断
+//5.6点前，10点后不能抢
+//6，查询地址经常变动  （redis控制）
+//，异常退出的任务需要重新进，状态为抢票中，但刷新时间过了一个小时
+
+//再造一个定时器，处理异常任务
+func (s *service) StartBathDoneError() {
+	if errorChnnel == nil {
+		errorChnnel = make(chan task.Task, 50)
+	}
+	defer func() {
+		if re := recover(); re != nil {
+			log.Println(time.Now().Format("2006-01-02 15:04:05") + " 抢票任务重启")
+			s.StartBathDoneError()
+		}
+	}()
+	ticker := time.NewTicker(time.Second * 60 * 60)
+	go func() {
+		for true {
+			ta := <-errorChnnel
+			go DoneErrorTask(ta)
+		}
+	}()
+	go func() {
+		for range ticker.C {
+			log.Println("定时处理异常任务：" + time.Now().Format("2006-01-02 15:04:05"))
+			//如果非抢票时间就跳过
+			d, err := book_dao.GetDao()
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+			rsp, err := d.ExceptionQuery(1000, 1)
+			if err != nil {
+				log.Println("定时任务：err" + err.Error())
+				continue
+			}
+			if len(rsp) > 0 {
+				for _, task := range rsp {
+					errorChnnel <- task
+				}
+			}
+		}
+		errorOpen <- true
+	}()
+	<-errorOpen
+}
+
+func DoneErrorTask(ta task.Task) {
+	//3已完成  0取消 2抢票中 1待抢票，4再等等（针对预约时间还有很长时间的
+	//抢票中 如果半小时还没更新时间并且还没过抢票时间，就转化为待抢票
+	//把再等等更新为待抢票
+	d, err := book_dao.GetDao()
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	lastTask, err := d.GetTask(ta.TaskId)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	//如果是抢票中，且半小时还没更新，
+	if lastTask.Status == 2 && (time.Now().Unix()-lastTask.UpdateTime > 1800) {
+		//判断抢票日期是否已经失效
+		s1 := strings.Split(lastTask.TrainDates, ",")
+		var ok bool
+		for _, item := range s1 {
+			//如果还可以抢票
+			if isCanQuery(item) > 0 {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			//如果满足条件则更新任务，重新回到抢票中
+			_ = d.UpdateStatus(lastTask.GetTaskId(), 1)
+			return
+		}
+	}
+	//如果是还没到抢票日期，再次计算是否可以抢票啦
+	if lastTask.Status == 4 {
+		s1 := strings.Split(lastTask.TrainDates, ",")
+		var ok bool
+		for _, item := range s1 {
+			days := isCanQuery(item)
+			//如果还可以抢票
+			if days > 0 && days < 30 {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			//如果满足条件则更新任务，重新回到抢票中
+			_ = d.UpdateStatus(lastTask.GetTaskId(), 1)
+			return
+		}
+	}
+
+}
 
 //开始抢票任务
 func (s *service) StartBathTicket() {
 	if taskChnnel == nil {
-		taskChnnel = make(chan task.TaskDetails, 50)
+		taskChnnel = make(chan task.Task, 100)
 	}
 	defer func() {
 		if re := recover(); re != nil {
@@ -40,11 +147,15 @@ func (s *service) StartBathTicket() {
 			s.StartBathTicket()
 		}
 	}()
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second * 60)
 	go DoneQueryTicket()
 	go func() {
 		for range ticker.C {
 			log.Println("定时任务：" + time.Now().Format("2006-01-02 15:04:05"))
+			//如果非抢票时间就跳过
+			if !timeIsOk() {
+				continue
+			}
 			rsp, err := s.GetNeedTicketList(100, 1, 1)
 			if err != nil {
 				log.Println("定时任务：err" + err.Error())
@@ -68,13 +179,13 @@ func DoneQueryTicket() {
 	}
 }
 
-func DoneGo(ta task.TaskDetails) (err error) {
+func DoneGo(ta task.Task) (err error) {
 	d, err := book_dao.GetDao()
 	if err != nil {
 		err = errors.New(fmt.Sprintf("[DoneGo] error %s", err.Error()))
 		return
 	}
-	lastTask, err := d.FindById(ta.Task.TaskId)
+	lastTask, err := d.FindById(ta.TaskId)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("[DoneGo] error %s\n", err.Error()))
 		return
@@ -82,15 +193,8 @@ func DoneGo(ta task.TaskDetails) (err error) {
 	defer func() {
 		if re := recover(); re != nil {
 			if err == nil {
-				err = errors.New(fmt.Sprintf("订单号 ： %s, error %s\n", ta.Task.TaskId, err.Error()))
+				err = errors.New(fmt.Sprintf("订单号 ： %s, error %s\n", ta.TaskId, err.Error()))
 				return
-			}
-		}
-		if err != nil {
-			if err.Error() != "非待抢" {
-				log.Printf("[DoneGo] error %s\n", err.Error())
-				//	ta.Task.Status = 1
-				//	err = d.Update(lastTask)
 			}
 		}
 	}()
@@ -99,13 +203,35 @@ func DoneGo(ta task.TaskDetails) (err error) {
 		err = errors.New(fmt.Sprintf("[DoneGo] error %s", "订单信息为空"))
 		return
 	}
-	if lastTask.Task.Status != 1 {
-		err = errors.New("非待抢")
+	//如果为0失效就不需要抢
+	if lastTask.Task.Status == 0 {
 		return
 	}
-	//修改状态
+	//修改状态 正在抢票
+	//为了安全，再判断当前时间是否可抢 5,取消啦
+	if lastTask.Task.Status == 5 {
+		return
+	}
+	//如果为 2已经有人在抢啦，就不需要抢
+	if lastTask.Task.Status == 2 {
+		return
+	}
+	//如果等于4，判断是否可以抢了
+	if lastTask.Task.Status == 4 {
+		var ok bool
+		d_temp := strings.Split(lastTask.Task.TrainDates, ",")
+		for _, item := range d_temp {
+			d := isCanQuery(item)
+			if d > 0 && d < 30 {
+				ok = true
+			}
+		}
+		if !ok {
+			return
+		}
+	}
 	lastTask.Task.Status = 2
-	err = d.Update(lastTask)
+	err = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("订单号 ： %s, error %s\n", lastTask.Task.TaskId, err.Error()))
 		return
@@ -124,77 +250,105 @@ func DoneGo(ta task.TaskDetails) (err error) {
 	}
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
-
 	//开始循环查询票
 	errNum := 0
 	var chooiseTran bean.Train
-	isGetTran := false
-	for true {
-		if errNum >= 10 {
-			err = errors.New(fmt.Sprintf("订单号 ： %s,查询连续出错10次，停止查询\n", lastTask.Task.TaskId))
-			return
+	var days []string
+	//获取可用日期
+	d_temp := strings.Split(lastTask.Task.TrainDates, ",")
+	for _, item := range d_temp {
+		d := isCanQuery(item)
+		if d > 0 && d < 30 {
+			days = append(days, item)
 		}
-		trans, err := queryTrainMessage(conversation2, ta.Task.TrainDates, stations.GetStationValueByKey(ta.Task.FindFrom), stations.GetStationValueByKey(ta.Task.FindTo), ta.Task.Type)
-		if err != nil {
-			errNum++
-			continue
-		}
-		if len(trans) > 0 {
-			//判断是否有合适的票
-			for _, item := range trans {
-				log.Println("TrainCode :" + item.TrainCode + "  CanBuy: " + item.CanBuy)
-				if item.Num == ta.Task.Trips && item.CanBuy == "Y" {
-					chooiseTran = item
-					isGetTran = true
-					break
-				}
-			}
-		}
-		if isGetTran {
-			break
-		}
-		time.Sleep(time.Second * 3)
 	}
-	//登陆
+	if len(days) == 0 {
+		log.Println("没有可用日期了，直接设置失败")
+		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 0)
+		return
+	}
+	//日期循环
+	//var d_index int
 	//获取用户信息
-	in := &user.InGetUserInfo{UserId: ta.Task.UserId}
+	in := &user.InGetUserInfo{UserId: lastTask.Task.UserId}
 	out, err := m_client.UserClient.GetUserInfo(context.TODO(), in)
 	if err != nil {
 		log.Printf("获取用户信息出错  ： %s,\n", err.Error())
 		return
 	}
-	//重试三次
-	loginErrNum := 0
-	var loginResult *login.LoginResult
-	for true {
-		if loginErrNum > 5 {
-			err = errors.New("登陆失败5次，取消抢票")
-			return err
-		}
-		_tmp, err := login.LoginAndCheckToken(*out.UserInf)
-		if err != nil {
-			loginErrNum++
-		} else {
-			loginResult = _tmp
-			break
-		}
-		time.Sleep(time.Second * 3)
-	}
-	//开始抢票
-	bookErrNum := 0
 	isOk := false
 	for true {
-		if bookErrNum > 5 {
-			err = errors.New("抢票失败5次，取消抢票")
-			return err
+		if errNum >= 10 {
+			log.Printf("订单号 ： %s,查询连续出错10次，停止查询\n", lastTask.Task.TaskId)
+			err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
+			return
 		}
-		if !boo_core.Book(*loginResult.Conversat, chooiseTran, ta) {
-			loginErrNum++
-		} else {
-			isOk = true
+		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
+		for i := 0; i < len(days); i++ {
+			trans, err := queryTrainMessage(conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
+			if err != nil {
+				errNum++
+				continue
+			}
+			if len(trans) > 0 {
+				//判断是否有合适的票
+				for _, item := range trans {
+					log.Println("TrainCode :" + item.Num + "  CanBuy: " + item.CanBuy)
+					if strings.Contains(lastTask.Task.Trips, item.Num) && item.CanBuy == "Y" {
+						chooiseTran = item
+						//登陆
+						//重试三次
+						var loginResult *login.LoginResult
+						for i := 3; i >= 0; i-- {
+							_tmp, err := login.LoginAndCheckToken(*out.UserInf)
+							if err == nil {
+								loginResult = _tmp
+								break
+							}
+							time.Sleep(time.Second * 2)
+						}
+						if loginResult == nil {
+							break
+						}
+						//开始抢票
+						bookErrNum := 0
+						for true {
+							if bookErrNum > 5 {
+								err = errors.New("抢票失败5次，取消抢票")
+								return err
+							}
+							if !boo_core.Book(*loginResult.Conversat, chooiseTran, *lastTask) {
+								bookErrNum++
+							} else {
+								isOk = true
+								break
+							}
+							time.Sleep(time.Second * 1)
+						}
+						if isOk {
+							break
+						}
+					}
+				}
+			}
+			if isOk {
+				break
+			}
+			//判断当前时间是否还有效
+			d := isCanQuery(days[i])
+			if d < 0 || d > 30 {
+				days = append(days[:i], days[(i+1):]...)
+			}
+			time.Sleep(time.Second * 5)
+		}
+
+		if isOk {
 			break
 		}
-		time.Sleep(time.Second * 1)
+
+		if len(days) == 0 {
+			break
+		}
 	}
 	if isOk {
 		log.Println("抢票成功")
@@ -206,6 +360,8 @@ func DoneGo(ta task.TaskDetails) (err error) {
 			log.Printf("抢票成功 订单号 ： %s, error %s\n", lastTask.Task.TaskId, err.Error())
 			return nil
 		}
+	} else {
+		err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 	}
 	return
 }
@@ -250,5 +406,23 @@ func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFro
 	}
 	err = errors.New("[QueryTrainMessage] net error")
 	return tran, err
+
+}
+
+//当前是否可以抢票
+func timeIsOk() (ok bool) {
+	now := time.Now()
+	if now.Hour() >= 6 && now.Hour() < 23 {
+		return true
+	}
+	return false
+}
+
+//判断已经可以买票，可以提前30天
+func isCanQuery(trainDate string) float64 {
+	a, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
+	b, _ := time.Parse("2006-01-02", trainDate)
+	d := b.Sub(a)
+	return d.Hours() / 24
 
 }

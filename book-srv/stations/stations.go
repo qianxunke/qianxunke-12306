@@ -25,6 +25,7 @@ func GetStationValueByKey(key string) (value string) {
 		stationMap = make(map[string]string)
 		//解析数据
 		f, err := os.Open("./stations/station_name.js")
+		defer f.Close()
 		if err != nil {
 			log.Fatalf("%v", err)
 			return
@@ -65,6 +66,7 @@ func Init() {
 	stationMap = make(map[string]string)
 	//解析数据
 	f, err := os.Open("./stations/station_name.js")
+	defer f.Close()
 	if err != nil {
 		log.Fatalf("%v", err)
 		return

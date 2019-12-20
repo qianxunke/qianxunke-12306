@@ -65,7 +65,7 @@ func submitOrder(conversation *conversation.Conversation, bookResult *bookBean.B
 		return
 	}
 	defer rsp.Body.Close()
-	log.Printf("[submitOrder] bodyBytes : %s\n", string(bodyBytes))
+	//	log.Printf("[submitOrder] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
 		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
@@ -196,7 +196,7 @@ func GetPassenger(method string, conversation *conversation.Conversation, Global
 	return
 }
 
-func checkOrderInfo(method string, conversation *conversation.Conversation, bookResult *bookBean.BookResult, u task.TaskDetails) (err error) {
+func checkOrderInfo(method string, conversation *conversation.Conversation, bookResult *bookBean.BookResult, setType string, u task.TaskDetails) (err error) {
 	log.Println("正在检查订单信息...")
 	defer func() {
 		if re := recover(); re != nil {
@@ -205,26 +205,6 @@ func checkOrderInfo(method string, conversation *conversation.Conversation, book
 	}()
 	passengerTicketStr := ""
 	oldPassengerStr := ""
-	/**
-	    PASSENGER_TICKER_STR = {
-	      '一等座': 'M',
-	      '特等座': 'P',
-	      '二等座': 'O',
-	      '商务座': 9,
-	      '硬座': 1,
-	      '无座': 1,
-	      '软座': 2,
-	      '软卧': 4,
-	      '硬卧': 3,
-	  }
-	  //判断用户选择的座位
-	*/
-	setType := ""
-	if strings.Contains(bookResult.SelectTran.TrainCode, "G") || strings.Contains(bookResult.SelectTran.TrainCode, "D") {
-		setType = "O"
-	} else {
-		setType = "1"
-	}
 
 	// 拼接passengerTicketStr
 	for i, item := range u.TaskPassenger {
@@ -279,7 +259,7 @@ func checkOrderInfo(method string, conversation *conversation.Conversation, book
 		if err != nil {
 			log.Printf("[checkOrderInfo]: %s", err.Error())
 			if method == http.MethodPost {
-				return checkOrderInfo(http.MethodPut, conversation, bookResult, u)
+				return checkOrderInfo(http.MethodPut, conversation, bookResult, setType, u)
 			} else {
 				return
 			}

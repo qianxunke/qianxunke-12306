@@ -42,16 +42,32 @@ func (e *Handler) GetTaskInfoList(ctx context.Context, req *task.In_GetTaskInfoL
 }
 
 func (e *Handler) UpdateTaskInfo(ctx context.Context, req *task.In_UpdateTaskInfo, rsp *task.Out_UpdateTaskInfo) error {
-	log.Printf("Received UserInfo.UpdateUserInfo request : %v", req)
+	log.Printf("Received Task.UpdateTaskInfo request : %v", req)
 	response := s.UpdateTaskInfo(req)
 	rsp.Error = response.Error
 	return nil
 }
 
 func (e *Handler) AddTask(ctx context.Context, req *task.In_AddTask, rsp *task.Out_AddTask) error {
-	log.Println("Received UserInfo.DoeUserRegister request")
+	log.Println("Received Task.AddTask request")
 	response := s.CreateTask(req)
 	rsp.Error = response.Error
 	rsp.TaskDetails = response.TaskDetails
+	return nil
+}
+
+func (e *Handler) GetUserTaskList(ctx context.Context, req *task.In_GetUserTaskList, rsp *task.Out_GetTaskInfoList) error {
+	log.Println("Received Task.GetUserTaskList request")
+	response := s.GetUserTaskList(req)
+	rsp.Error = response.Error
+	rsp.Total = response.Total
+	rsp.TaskDetailsList = response.TaskDetailsList
+	return nil
+}
+
+func (e *Handler) UpdateTaskStatus(ctx context.Context, req *task.In_UpdateTaskStatus, rsp *task.Out_UpdateTaskStatus) error {
+	log.Println("Received Task.UpdateTaskStatus request")
+	response := s.UpdateTaskStatus(req)
+	rsp.Error = response.Error
 	return nil
 }

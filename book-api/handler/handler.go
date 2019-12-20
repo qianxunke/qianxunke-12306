@@ -37,6 +37,9 @@ func RegiserRouter(service web.Service, router *gin.Engine) {
 		{
 			productRouter.GET("/get/:taskId", productService.GetTask)
 			productRouter.POST("/add", productService.AddTask)
+			productRouter.POST("/list", productService.AddTask)
+			productRouter.POST("/updateStatus", productService.UpdateTaskStatus)
+			productRouter.GET("/userList", productService.GetUserTask)
 		}
 
 	}

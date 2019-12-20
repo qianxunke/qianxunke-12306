@@ -91,8 +91,6 @@ message Passenger{
         string              gat_valid_date_start=29;  //''":"",
         string              gat_valid_date_end=30;     //:"",
         string              gat_version=31;             //:""
-
-
 }
 message In_doneUserLogin {
     string user_name = 1;

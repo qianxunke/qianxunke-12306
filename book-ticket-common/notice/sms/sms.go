@@ -8,6 +8,7 @@ import (
 	r "github.com/go-redis/redis"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 //短信通知类
@@ -66,7 +67,7 @@ func SendRegisterMsm(code int64, phone string, rc *r.Client) (err error) {
 		return
 	}
 	//往redis写入验证码
-	redisErr := rc.Do("SET", phone, code, "Ex", 30000).Err()
+	redisErr := rc.Set(phone, code, time.Second*180).Err()
 	if redisErr != nil {
 		err = errors.New("Redis执行失败")
 	}
