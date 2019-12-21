@@ -90,13 +90,13 @@ func (s *service) DelUserAccessToken(token string) (err error) {
 }
 
 func (s *service) AuthenticationFromToken(tk string) (subject *Subject, err error) {
-	cliaim, err := s.parseToken(tk)
+	claims, err := s.parseToken(tk)
 	//如果此token无效
 	if err != nil {
 		return
 	}
 	subject = &Subject{
-		ID: cliaim.Subject,
+		ID: claims.Subject,
 	}
 	/*
 		cacheToken, err := s.getTokenFromCache(subject)

@@ -73,11 +73,6 @@ func (s *Auth) AuthenticationFromToken(ctx context.Context, req *auth.Request, r
 		return err
 	}
 	rsp.UserId = userSub.ID
-	if err != nil {
-		rsp.Success = false
-		log.Logf("[AuthenticationFromToken] 鉴权用户token失败，err：%s", err)
-		return err
-	}
 	rsp.Success = true
 	return nil
 }
