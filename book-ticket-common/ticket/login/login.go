@@ -3,6 +3,7 @@ package login
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/http_util"
 	"gitee.com/qianxunke/book-ticket-common/proto/user"
@@ -32,6 +33,14 @@ type LoginResult struct {
 func checkUser(u user.UserInf, method string, checkCode string, loginResult *LoginResult) (err error) {
 	// 准备URL
 	log.Println("正在验证账号密码...")
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[checkUser] %v", re))
+				return
+			}
+		}
+	}()
 	data := url.Values{}
 	data.Set("username", u.TranUserAccount)
 	data.Set("password", u.TranUserPwd)
@@ -103,6 +112,14 @@ func checkUser(u user.UserInf, method string, checkCode string, loginResult *Log
 func getToken(loginResult *LoginResult) (err error) {
 	// 准备URL
 	log.Println("正在获取Token...")
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[getToken] %v", re))
+				return
+			}
+		}
+	}()
 	data := url.Values{}
 	data.Set("appid", "otn")
 	req, _ := http.NewRequest(http.MethodPost, api.GetToken, strings.NewReader(data.Encode()))
@@ -151,6 +168,14 @@ func getToken(loginResult *LoginResult) (err error) {
 
 func checkToken(loginResult *LoginResult) (err error) {
 	log.Println("正在验证Token...")
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[checkToken] %v", re))
+				return
+			}
+		}
+	}()
 	data := url.Values{}
 	data.Set("tk", loginResult.Newapptk)
 	req, _ := http.NewRequest(http.MethodPost, api.CheckToken, strings.NewReader(data.Encode()))
@@ -302,6 +327,14 @@ func LoginOut(loginResult *LoginResult) (err error) {
   登陆并检查token
 */
 func LoginAndCheckToken(u user.UserInf) (loginResult *LoginResult, err error) {
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[LoginAndCheckToken] %v", re))
+				return
+			}
+		}
+	}()
 	loginResult = &LoginResult{}
 	loginResult.Conversat = &conversation.Conversation{}
 	loginResult.Conversat.Client = &http.Client{}

@@ -51,7 +51,7 @@ func (s *service) StartBathDoneError() {
 			s.StartBathDoneError()
 		}
 	}()
-	ticker := time.NewTicker(time.Second * 60 * 60)
+	ticker := time.NewTicker(time.Second * 60 * 30)
 	go func() {
 		for true {
 			ta := <-errorChnnel
@@ -60,21 +60,21 @@ func (s *service) StartBathDoneError() {
 	}()
 	go func() {
 		for range ticker.C {
-			log.Println("定时处理异常任务：" + time.Now().Format("2006-01-02 15:04:05"))
+			log.Println("定时处理异常任务-------->：" + time.Now().Format("2006-01-02 15:04:05"))
 			//如果非抢票时间就跳过
 			d, err := book_dao.GetDao()
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
-			rsp, err := d.ExceptionQuery(1000, 1)
+			rsp, err := d.ExceptionQuery(100, 1)
 			if err != nil {
 				log.Println("定时任务：err" + err.Error())
 				continue
 			}
 			if len(rsp) > 0 {
-				for _, task := range rsp {
-					errorChnnel <- task
+				for _, ta := range rsp {
+					errorChnnel <- ta
 				}
 			}
 		}
@@ -139,7 +139,7 @@ func DoneErrorTask(ta task.Task) {
 //开始抢票任务
 func (s *service) StartBathTicket() {
 	if taskChnnel == nil {
-		taskChnnel = make(chan task.Task, 100)
+		taskChnnel = make(chan task.Task, 20)
 	}
 	defer func() {
 		if re := recover(); re != nil {
@@ -156,14 +156,14 @@ func (s *service) StartBathTicket() {
 			if !timeIsOk() {
 				continue
 			}
-			rsp, err := s.GetNeedTicketList(100, 1, 1)
+			rsp, err := s.GetNeedTicketList(20, 1, 1)
 			if err != nil {
 				log.Println("定时任务：err" + err.Error())
 				continue
 			}
 			if len(rsp) > 0 {
-				for _, task := range rsp {
-					taskChnnel <- task
+				for _, ta := range rsp {
+					taskChnnel <- ta
 				}
 			}
 		}
@@ -242,10 +242,12 @@ func DoneGo(ta task.Task) (err error) {
 	http_util.SetReqHeader(req)
 	rsp, err := conversation2.Client.Do(req)
 	if err != nil {
+		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("[QueryTrainMessage] error %v", err)
 	}
 	_, err = ioutil.ReadAll(rsp.Body)
 	if err != nil {
+		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("[QueryTrainMessage] error %v", err)
 	}
 	defer rsp.Body.Close()
@@ -273,6 +275,7 @@ func DoneGo(ta task.Task) (err error) {
 	in := &user.InGetUserInfo{UserId: lastTask.Task.UserId}
 	out, err := m_client.UserClient.GetUserInfo(context.TODO(), in)
 	if err != nil {
+		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("获取用户信息出错  ： %s,\n", err.Error())
 		return
 	}
@@ -281,6 +284,14 @@ func DoneGo(ta task.Task) (err error) {
 		if errNum >= 10 {
 			log.Printf("用户 ：%s ,订单号 ： %s,查询连续出错10次，停止查询\n", out.UserInf.MobilePhone, lastTask.Task.TaskId)
 			err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
+			return
+		}
+		//判断该订单是否已经取消
+		t1, err := d.GetTask(ta.TaskId)
+		if err != nil {
+			return
+		}
+		if t1.Status != 2 {
 			return
 		}
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
@@ -327,7 +338,7 @@ func DoneGo(ta task.Task) (err error) {
 								isOk = true
 								break
 							}
-							time.Sleep(time.Second * 1)
+							time.Sleep(time.Second * 3)
 						}
 						if isOk {
 							break
@@ -372,6 +383,14 @@ func DoneGo(ta task.Task) (err error) {
 
 func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFrom string, FindTo string, Type string) (tran []bean.Train, err error) {
 	//ADULT
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New("[queryTrainMessage] : 查询异常")
+				return
+			}
+		}
+	}()
 	req1, _ := http.NewRequest(http.MethodGet, api.Query+"Z?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)

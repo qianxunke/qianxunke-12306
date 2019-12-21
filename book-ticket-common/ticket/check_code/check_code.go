@@ -88,6 +88,14 @@ func checkCodeIdentify(vCode VCode) (result string, err error) {
 	log.Println("[checkCodeIdentify]识别验证码...")
 	defer func() {
 		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[checkCodeIdentify] %v", re))
+				return
+			}
+		}
+	}()
+	defer func() {
+		if re := recover(); re != nil {
 			if err != nil {
 				err = errors.New(fmt.Sprintf("%v", re))
 			}
@@ -176,6 +184,14 @@ func simulatedClick(codeList []string) (result string, err error) {
 //向12306验证-验证码
 func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strIdentify string) (err error) {
 	log.Println("[checkCodeTo12306]向12306验证-验证码...")
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[checkCodeTo12306] %v", re))
+				return
+			}
+		}
+	}()
 	data := url.Values{}
 	data.Set("callback", code.CallbackParameter)
 	data.Set("answer", strIdentify)
@@ -207,6 +223,14 @@ func checkCodeTo12306(conversation *conversation.Conversation, code VCode, strId
 }
 
 func CheckCode(conversation *conversation.Conversation) (code string, err error) {
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[CheckCode] %v", re))
+				return
+			}
+		}
+	}()
 	vCode, err := getVCode(conversation)
 	if err != nil {
 		fmt.Printf("获取验证码失败正在重试... %s\n", err.Error())

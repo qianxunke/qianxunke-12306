@@ -90,6 +90,14 @@ func submitOrder(conversation *conversation.Conversation, bookResult *bookBean.B
 }
 
 func GetInitDc(conversation *conversation.Conversation) (GlobalRepeatSubmitToken string, da bookBean.InitDC, err error) {
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[GetInitDc] %v", re))
+				return
+			}
+		}
+	}()
 	log.Println("正在请求InitDc...")
 	data := &url.Values{}
 	data.Set("_json_att", "")
@@ -137,7 +145,7 @@ func GetInitDc(conversation *conversation.Conversation) (GlobalRepeatSubmitToken
 		}
 		//bookResult.InitDc = true
 	} else {
-		log.Printf("[getInitDc]:  %s\n", string(bodyBytes))
+		log.Printf("[getInitDc]: error  %s\n", rsp.Status)
 		return
 	}
 
@@ -146,6 +154,14 @@ func GetInitDc(conversation *conversation.Conversation) (GlobalRepeatSubmitToken
 }
 
 func GetPassenger(method string, conversation *conversation.Conversation, GlobalRepeatSubmitToken string) (Passenger bool, ps []bookBean.Normal_passengers, err error) {
+	defer func() {
+		if re := recover(); re != nil {
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[GetPassenger] %v", re))
+				return
+			}
+		}
+	}()
 	log.Println("正在请求乘客信息...")
 	data := &url.Values{}
 	data.Set("_json_att", "")
@@ -200,7 +216,10 @@ func checkOrderInfo(method string, conversation *conversation.Conversation, book
 	log.Println("正在检查订单信息...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[checkOrderInfo] %v", re))
+				return
+			}
 		}
 	}()
 	passengerTicketStr := ""
@@ -264,7 +283,7 @@ func checkOrderInfo(method string, conversation *conversation.Conversation, book
 				return
 			}
 		}
-		log.Printf("[checkOrderInfo] bodyBytes : %s\n", string(bodyBytes))
+		//	log.Printf("[checkOrderInfo] bodyBytes : %s\n", string(bodyBytes))
 		if m["status"].(bool) && m["data"].(map[string]interface{})["submitStatus"].(bool) {
 			bookResult.CheckOrderInfo = true
 		} else {
@@ -289,7 +308,10 @@ func getQueueCount(conversation *conversation.Conversation, bookResult *bookBean
 	log.Println("[getQueueCount] 获取队列信息...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[getQueueCount] %v", re))
+				return
+			}
 		}
 	}()
 	//Sun Dec 15 2019 00:00:00 GMT+0800 (中国标准时间)
@@ -347,7 +369,10 @@ func getConfirmSingleForQueue(conversation *conversation.Conversation, bookResul
 	log.Println("[getConfirmSingleForQueue]正在下单...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[getConfirmSingleForQueue] %v", re))
+				return
+			}
 		}
 	}()
 	data := &url.Values{}
@@ -401,7 +426,7 @@ func getConfirmSingleForQueue(conversation *conversation.Conversation, bookResul
 			bookResult.CheckOrderInfo = false
 		}
 	} else {
-		log.Printf("[getConfirmSingleForQueue]:  %s\n", string(bodyBytes))
+		log.Printf("[getConfirmSingleForQueue]:  %d\n", rsp.StatusCode)
 		return errors.New("network error")
 	}
 	return
@@ -418,7 +443,10 @@ func getQueryOrderTime(conversation *conversation.Conversation, bookResult *book
 	log.Println("正在查询排队时间...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			if err == nil {
+				err = errors.New(fmt.Sprintf("[getQueryOrderTime] %v", re))
+				return
+			}
 		}
 	}()
 	data := &url.Values{}
@@ -504,7 +532,7 @@ func getQueryOrderTimeMethod(r *http.Request, conversation *conversation.Convers
 			bookResult.CheckOrderInfo = false
 		}
 	} else {
-		log.Printf("[getQueryOrderTimeMethod]:  %s\n", string(bodyBytes))
+		log.Printf("[getQueryOrderTimeMethod]:  %d\n", rsp.StatusCode)
 		return
 	}
 	return
@@ -520,9 +548,10 @@ func getResultOrderForQueue(conversation *conversation.Conversation, bookResult 
 	log.Println("请求resultOrderForQueue页面...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			log.Println("[getResultOrderForQueue] recover=" + fmt.Sprintf("%v", re))
 		}
 	}()
+
 	data := &url.Values{}
 	data.Set("_json_att", "")
 	data.Set("orderSequence_no", bookResult.QueryTimeResult.OrderId)
@@ -546,7 +575,7 @@ func getResultOrderForQueue(conversation *conversation.Conversation, bookResult 
 		return
 	}
 	defer rsp.Body.Close()
-	log.Printf("[getResultOrderForQueue] bodyBytes : %s\n", string(bodyBytes))
+	//	log.Printf("[getResultOrderForQueue] bodyBytes : %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
 		http_util.CookieChange(conversation, rsp.Cookies())
 		m := make(map[string]interface{})
@@ -562,7 +591,7 @@ func getResultOrderForQueue(conversation *conversation.Conversation, bookResult 
 			bookResult.ResultOrderForQueue = false
 		}
 	} else {
-		log.Printf("[getResultOrderForQueue]:  %s\n", string(bodyBytes))
+		log.Printf("[getResultOrderForQueue]:  %d\n", rsp.StatusCode)
 		return errors.New("network error")
 	}
 	return
@@ -576,10 +605,10 @@ func getResultOrderForQueue(conversation *conversation.Conversation, bookResult 
  * @return
  */
 func getOrderMsg(conversation *conversation.Conversation, bookResult *bookBean.BookResult) (err error) {
-	log.Println("请求resultOrderForQueue页面...")
+	log.Println("请求getOrderMsg页面...")
 	defer func() {
 		if re := recover(); re != nil {
-			err = errors.New(fmt.Sprintf("%s", re))
+			log.Println("[getOrderMsg] recover=" + fmt.Sprintf("%v", re))
 		}
 	}()
 	data := &url.Values{}
@@ -595,12 +624,12 @@ func getOrderMsg(conversation *conversation.Conversation, bookResult *bookBean.B
 	http_util.AddReqCookie(conversation.C, req)
 	rsp, err := conversation.Client.Do(req)
 	if err != nil {
-		log.Printf("[getResultOrderForQueue]: %s", err.Error())
+		log.Printf("[getOrderMsg]: %s", err.Error())
 		return
 	}
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		log.Printf("[getResultOrderForQueue]: %s", err.Error())
+		log.Printf("[getOrderMsg]: %s", err.Error())
 		return
 	}
 	defer rsp.Body.Close()
@@ -625,7 +654,7 @@ func getOrderMsg(conversation *conversation.Conversation, bookResult *bookBean.B
 		}
 
 	} else {
-		log.Printf("[getResultOrderForQueue]:  %s\n", string(bodyBytes))
+		log.Printf("[getOrderMsg]:  %s\n", string(bodyBytes))
 		return errors.New("network error")
 	}
 	return

@@ -1,6 +1,7 @@
 package boo_core
 
 import (
+	"fmt"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
 	"gitee.com/qianxunke/book-ticket-common/proto/task"
 	bookBean "gitee.com/qianxunke/book-ticket-common/ticket/book/bean"
@@ -13,6 +14,12 @@ import (
 
 //下单
 func Book(conversation conversation.Conversation, chooseTrain bean.Train, u task.TaskDetails) (ok bool) {
+	defer func() {
+		if re := recover(); re != nil {
+			log.Println("[Book] recover=" + fmt.Sprintf("%v", re))
+			ok = false
+		}
+	}()
 	// 设置绑定会话的客户端
 	boolResult := &bookBean.BookResult{}
 	boolResult.SelectTran = chooseTrain
