@@ -297,7 +297,7 @@ func DoneGo(ta task.Task) (err error) {
 			if len(trans) > 0 {
 				//判断是否有合适的票
 				for _, item := range trans {
-					log.Println("TrainCode :" + item.Num + "  CanBuy: " + item.CanBuy)
+					//log.Println("TrainCode :" + item.Num + "  CanBuy: " + item.CanBuy)
 					if strings.Contains(lastTask.Task.Trips, item.Num) && item.CanBuy == "Y" {
 						chooiseTran = item
 						//登陆

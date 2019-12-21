@@ -4,9 +4,17 @@ import (
 	trainDao "book-query-srv/modules/train/dao"
 	"encoding/json"
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
+	"gitee.com/qianxunke/book-ticket-common/basic/utils/http_util"
 	ticketProto "gitee.com/qianxunke/book-ticket-common/proto/ticket"
-	"github.com/micro/go-micro/util/log"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"time"
+)
+
+var (
+	con *conversation.Conversation
 )
 
 //获取信息
@@ -78,13 +86,34 @@ func (s *service) UpdateTrainInfo(req *ticketProto.In_UpdateTrainInfo) (rsp *tic
 	return
 }
 
+func GetClent() (c *conversation.Conversation) {
+	if con != nil {
+		return con
+	}
+	con = &conversation.Conversation{}
+	con.Client = &http.Client{}
+	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/otn/leftTicket/init", nil)
+	http_util.SetReqHeader(req)
+	rsp, err := con.Client.Do(req)
+	if err != nil {
+		log.Printf("[QueryTrainMessage] error %v", err)
+	}
+	_, err = ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		log.Printf("[QueryTrainMessage] error %v", err)
+	}
+	defer rsp.Body.Close()
+	http_util.CookieChange(con, rsp.Cookies())
+	return
+}
+
 //获取列表
 func (s *service) GetTrainInfoList(req *ticketProto.In_GetTrainInfoList) (rsp *ticketProto.Out_GetTrainInfoList) {
 	rsp = &ticketProto.Out_GetTrainInfoList{}
 	var err error
 	dao, err := trainDao.GetTicketDao()
 	if err != nil {
-		log.Logf("ERROR: %v", err)
+		log.Printf("ERROR: %v", err)
 		rsp.Error = &ticketProto.Error{
 			Code:    http.StatusInternalServerError,
 			Message: err.Error(),
@@ -93,16 +122,17 @@ func (s *service) GetTrainInfoList(req *ticketProto.In_GetTrainInfoList) (rsp *t
 	}
 	value, err := dao.SimpleQuery(req.FindFrom, req.FindTo, req.TrainDate, req.PurposeCodes)
 	if err != nil || len(value) == 0 {
-		log.Logf("ERROR: %v", err)
+		log.Printf("ERROR: %v", err)
 		//从12306查询
 		q, err := dao.GetRedisClient().Do("GET", "10086").String()
 		if err != nil {
-			log.Logf("redis : %v\n", err)
+			log.Printf("redis : %v\n", err)
 			q = "Z"
 		}
-		rsp.TrainList, err = s.queryTrainMessage(q, *req)
+		time.Sleep(time.Second * 2)
+		rsp.TrainList, err = s.queryTrainMessage(*GetClent(), q, *req)
 		if err != nil {
-			log.Logf("ERROR: %v\n", err)
+			log.Printf("ERROR: %v\n", err)
 		} else {
 		_:
 			dao.Insert(rsp.TrainList)
