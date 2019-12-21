@@ -5,21 +5,21 @@ user_srv:
     port: 9100
   consul:
     enabled: true
-    host: 127.0.0.1
+    host: 172.17.0.12
     port: 8500
   db:
     mysql:
-      enabled: true
-      url: root:root@(127.0.0.1:3306)/book_ticket_user?charset=utf8&parseTime=true&loc=Asia%2FShanghai
+      enabled: false
+      url: root:root@(172.17.0.12:3306)/book_ticket_user?charset=utf8&parseTime=true&loc=Asia%2FShanghai
       maxIdleConnection: 100
       maxOpenConnection: 130
   redis:
     enabled: true
-    conn: 127.0.0.1:6379
+    conn: 172.17.0.12:6379
     dbNum: 0
     password:
     timeout: 3000
     sentinel:
       enabled: false
       master: bookMaster
-      nodes: 127.0.0.1:16379,127.0.0.1:26379,127.0.0.1:36379
+      nodes: 172.17.0.12:16379,172.17.0.12:26379,172.17.0.12:36379
