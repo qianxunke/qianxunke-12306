@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gitee.com/qianxunke/book-ticket-common/basic/common"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/conversation"
 	"gitee.com/qianxunke/book-ticket-common/basic/utils/http_util"
 	"gitee.com/qianxunke/book-ticket-common/ticket/static/api"
@@ -94,7 +95,7 @@ func checkCodeIdentify(vCode VCode) (result string, err error) {
 	}()
 	data := url.Values{}
 	data.Add("imageFile", vCode.Image)
-	resp, err := http.PostForm(api.POST_CHECK_CODE_FROM_MY_SERVER, data)
+	resp, err := http.PostForm(common.POST_CHECK_CODE_FROM_MY_SERVER, data)
 	if err != nil {
 		return
 	}
