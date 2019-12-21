@@ -44,12 +44,16 @@ func AuthWrapper(c *gin.Context) {
 			c.Request.Header.Add("userId", tokenRsp.UserId)
 			c.Next()
 		} else {
-			log.Logf("[AuthWrapper]，token不合法，无用户id")
-			resonseEntity := &api_common.ResponseEntity{}
-			resonseEntity.Message = "身份验证不通过，请先登陆!"
-			resonseEntity.Code = http.StatusBadRequest
-			c.JSON(http.StatusBadRequest, resonseEntity)
-			c.Abort()
+			/*
+				log.Logf("[AuthWrapper]，token不合法，无用户id")
+				resonseEntity := &api_common.ResponseEntity{}
+				resonseEntity.Message = "身份验证不通过，请先登陆!"
+				resonseEntity.Code = http.StatusBadRequest
+				c.JSON(http.StatusBadRequest, resonseEntity)
+				c.Abort()
+
+			*/
+			c.Next()
 			return
 		}
 	}
