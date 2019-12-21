@@ -219,8 +219,8 @@ func DoneGo(ta task.Task) (err error) {
 	//如果等于4，判断是否可以抢了
 	if lastTask.Task.Status == 4 {
 		var ok bool
-		d_temp := strings.Split(lastTask.Task.TrainDates, ",")
-		for _, item := range d_temp {
+		dTemp := strings.Split(lastTask.Task.TrainDates, ",")
+		for _, item := range dTemp {
 			d := isCanQuery(item)
 			if d > 0 && d < 30 {
 				ok = true
@@ -257,8 +257,8 @@ func DoneGo(ta task.Task) (err error) {
 	var chooiseTran bean.Train
 	var days []string
 	//获取可用日期
-	d_temp := strings.Split(lastTask.Task.TrainDates, ",")
-	for _, item := range d_temp {
+	dayTmp := strings.Split(lastTask.Task.TrainDates, ",")
+	for _, item := range dayTmp {
 		d := isCanQuery(item)
 		if d > 0 && d < 30 {
 			days = append(days, item)
@@ -284,20 +284,23 @@ func DoneGo(ta task.Task) (err error) {
 		if errNum >= 10 {
 			log.Printf("用户 ：%s ,订单号 ： %s,查询连续出错10次，停止查询\n", out.UserInf.MobilePhone, lastTask.Task.TaskId)
 			err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
-			return
+			return err
 		}
 		//判断该订单是否已经取消
 		t1, err := d.GetTask(ta.TaskId)
 		if err != nil {
-			return
+			return err
 		}
 		if t1.Status != 2 {
-			return
+			return errors.New("[取消抢票]")
 		}
-		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
+		err = d.UpdateStatus(lastTask.Task.GetTaskId(), 2)
+		if err != nil {
+			return err
+		}
 		if !timeIsOk() {
-			_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
-			return
+			err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
+			return err
 		}
 		for i := 0; i < len(days); i++ {
 			trans, err := queryTrainMessage(conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
