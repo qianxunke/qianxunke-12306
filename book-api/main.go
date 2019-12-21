@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	appName = "book_ticket_api"
+	appName = "book_api"
 	cfg     = &appCfg{}
 )
 

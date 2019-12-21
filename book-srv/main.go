@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	appName = "book_ticket_srv"
+	appName = "book_srv"
 	cfg     = &userCfg{}
 )
 

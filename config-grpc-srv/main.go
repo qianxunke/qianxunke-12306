@@ -17,7 +17,7 @@ import (
 var (
 	//mux        sync.RWMutex
 	//configMaps = make(map[string]*proto.ChangeSet)
-	apps = []string{"auth_srv", "user_api", "user_srv", "book_ticket_srv", "book_ticket_api", "query_api", "query_srv", "inventory_srv"}
+	apps = []string{"auth_srv", "user_api", "user_srv", "book_srv", "book_api", "query_api", "query_srv"}
 )
 
 type Service struct{}

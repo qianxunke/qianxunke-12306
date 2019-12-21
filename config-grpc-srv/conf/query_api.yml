@@ -1,6 +1,6 @@
 query_api:
   query_api_app:
-    name: com.book.ticket.api.query_api
+    name: com.book.ticket.api.query
     address: 127.0.0.1
     port: 9097
   consul:

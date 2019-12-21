@@ -1,6 +1,6 @@
-book_ticket_srv:
-  book_ticket_srv_app:
-    name: com.book.ticket.srv.book_ticket_srv
+book_srv:
+  book_srv_app:
+    name: com.book.ticket.srv.book
     address: 127.0.0.1
     port: 9095
   consul:
