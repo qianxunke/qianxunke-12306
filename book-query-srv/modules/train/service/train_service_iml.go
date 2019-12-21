@@ -122,7 +122,7 @@ func (s *service) GetTrainInfoList(req *ticketProto.In_GetTrainInfoList) (rsp *t
 			log.Printf("redis : %v\n", err)
 			q = "Z"
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Millisecond * 500)
 		rsp.TrainList, err = s.queryTrainMessage(q, *req)
 		if err != nil {
 			log.Printf("ERROR: %v\n", err)

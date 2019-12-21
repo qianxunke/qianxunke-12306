@@ -21,8 +21,12 @@ import (
  *   用户信息
  * @return
  */
-func (s *service) queryTrainMessage(qq string, que ticket.In_GetTrainInfoList) (tran []*ticket.Train, err error) {
-	conversation2 := &conversation.Conversation{}
+var (
+	conversation2 *conversation.Conversation
+)
+
+func InitCon() {
+	conversation2 = &conversation.Conversation{}
 	conversation2.Client = &http.Client{}
 	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/otn/leftTicket/init", nil)
 	http_util.SetReqHeader(req)
@@ -36,6 +40,12 @@ func (s *service) queryTrainMessage(qq string, que ticket.In_GetTrainInfoList) (
 	}
 	defer rsp.Body.Close()
 	http_util.CookieChange(conversation2, rsp.Cookies())
+}
+
+func (s *service) queryTrainMessage(qq string, que ticket.In_GetTrainInfoList) (tran []*ticket.Train, err error) {
+	if conversation2 == nil {
+		InitCon()
+	}
 	//ADULT
 	req1, _ := http.NewRequest(http.MethodGet, api.Query+"Z?leftTicketDTO.train_date="+que.TrainDate+"&leftTicketDTO.from_station="+que.FindFrom+"&leftTicketDTO.to_station="+que.FindTo+"&purpose_codes="+que.PurposeCodes, nil)
 	http_util.AddReqCookie(conversation2.C, req1)
