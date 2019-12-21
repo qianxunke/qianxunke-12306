@@ -203,7 +203,7 @@ func (s *userInfoServiceImp) GetUserInfo(req *userInfoProto.InGetUserInfo) (rsp 
 		return
 	}
 	rsp.Roles = []string{"admin"}
-	_ = hideUserPrivate(rsp.UserInf)
+	//_ = hideUserPrivate(rsp.UserInf)
 	rsp.Error = &userInfoProto.Error{
 		Code:    http.StatusOK,
 		Message: "OK",
@@ -317,9 +317,17 @@ func (s *userInfoServiceImp) GetVerificationCode(req *userInfoProto.InGetVerific
 		//判断该手机号是否注册
 		user := &userInfoProto.UserInf{}
 		err := DB.Where(" mobile_phone = ?", req.Telephone).First(&user).Error
-		if err == nil && len(user.UserId) > 0 {
+		if err != nil {
 			rsp.Error = &userInfoProto.Error{
 				Code:    http.StatusInternalServerError,
+				Message: err.Error(),
+			}
+			return
+		}
+
+		if len(user.UserId) == 0 {
+			rsp.Error = &userInfoProto.Error{
+				Code:    http.StatusBadRequest,
 				Message: "该手机号未注册，请先注册",
 			}
 			return
@@ -356,7 +364,7 @@ func (s *userInfoServiceImp) GetVerificationCode(req *userInfoProto.InGetVerific
 	}
 	rsp.Error = &userInfoProto.Error{
 		Code:    http.StatusOK,
-		Message: "ok",
+		Message: "验证码已发送...",
 	}
 	return
 }
