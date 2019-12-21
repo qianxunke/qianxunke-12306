@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-var (
-	con *conversation.Conversation
-)
-
 //获取信息
 func (s *service) GetTrainById(req *ticketProto.In_GetTrainInfo) (rsp *ticketProto.Out_GetTrainInfo) {
 	rsp = &ticketProto.Out_GetTrainInfo{}
@@ -86,10 +82,7 @@ func (s *service) UpdateTrainInfo(req *ticketProto.In_UpdateTrainInfo) (rsp *tic
 	return
 }
 
-func GetClent() (c *conversation.Conversation) {
-	if con != nil {
-		return con
-	}
+func GetClent() (con *conversation.Conversation) {
 	con = &conversation.Conversation{}
 	con.Client = &http.Client{}
 	req, _ := http.NewRequest(http.MethodGet, "https://kyfw.12306.cn/otn/leftTicket/init", nil)
@@ -129,8 +122,8 @@ func (s *service) GetTrainInfoList(req *ticketProto.In_GetTrainInfoList) (rsp *t
 			log.Printf("redis : %v\n", err)
 			q = "Z"
 		}
-		time.Sleep(time.Second * 2)
-		rsp.TrainList, err = s.queryTrainMessage(*GetClent(), q, *req)
+		time.Sleep(time.Second)
+		rsp.TrainList, err = s.queryTrainMessage(q, *req)
 		if err != nil {
 			log.Printf("ERROR: %v\n", err)
 		} else {
