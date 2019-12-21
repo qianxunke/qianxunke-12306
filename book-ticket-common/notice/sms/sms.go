@@ -36,6 +36,27 @@ func SendTicketSuccessInfoToUser(phone string, userName string) {
 		phone,
 		sign+"尊敬的"+userName+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
 	)
+	rsp, err := http.Get(smsapi + url)
+	if err != nil {
+		err = errors.New("短信发送失败")
+		return
+	}
+	SendTicketSuccessInfoToAdmin("18334142052", userName)
+	if rsp.StatusCode != http.StatusOK {
+		err = errors.New("短信回调失败")
+		return
+	}
+
+}
+
+func SendTicketSuccessInfoToAdmin(phone string, userName string) {
+	//https://api.smsbao.com/sms?u=USERNAME&p=PASSWORD&m=PHONE&c=CONTENT
+	url := fmt.Sprintf("u=%s&p=%s&m=%s&c=%s",
+		user,
+		getMd5Pwd(password),
+		phone,
+		sign+"尊敬的"+userName+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
+	)
 	println("----" + smsapi + url)
 	rsp, err := http.Get(smsapi + url)
 	if err != nil {
