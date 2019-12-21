@@ -9,10 +9,10 @@ user_srv:
     port: 8500
   db:
     mysql:
-      enabled: false
+      enabled: true
       url: root:root@(172.17.0.12:3306)/book_ticket_user?charset=utf8&parseTime=true&loc=Asia%2FShanghai
-      maxIdleConnection: 100
-      maxOpenConnection: 130
+      maxIdleConnection: 30
+      maxOpenConnection: 30
   redis:
     enabled: true
     conn: 172.17.0.12:6379

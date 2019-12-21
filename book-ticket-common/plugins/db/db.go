@@ -85,7 +85,7 @@ func createEngine(isMaster bool) {
 		return
 	}
 	//是否启用日志记录器，将会在控制台打印sql
-	engine.LogMode(true)
+	engine.LogMode(false)
 	if cfg.Mysql.MaxIdleConnection > 0 {
 		engine.DB().SetMaxIdleConns(cfg.Mysql.MaxIdleConnection)
 	}
