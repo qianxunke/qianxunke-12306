@@ -279,7 +279,7 @@ func DoneGo(ta task.Task) (err error) {
 	isOk := false
 	for true {
 		if errNum >= 10 {
-			log.Printf("订单号 ： %s,查询连续出错10次，停止查询\n", lastTask.Task.TaskId)
+			log.Printf("用户 ：%s ,订单号 ： %s,查询连续出错10次，停止查询\n", out.UserInf.MobilePhone, lastTask.Task.TaskId)
 			err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 			return
 		}
