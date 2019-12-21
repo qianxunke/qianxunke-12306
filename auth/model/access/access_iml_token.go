@@ -98,9 +98,12 @@ func (s *service) AuthenticationFromToken(tk string) (subject *Subject, err erro
 	subject = &Subject{
 		ID: cliaim.Subject,
 	}
-	cacheToken, err := s.getTokenFromCache(subject)
-	if err != nil || len(cacheToken) == 0 || cacheToken != tk {
-		return nil, fmt.Errorf("[AuthenticationFromToken] 从缓存获取token失败，err: %s", err)
-	}
+	/*
+		cacheToken, err := s.getTokenFromCache(subject)
+		if err != nil || len(cacheToken) == 0 || cacheToken != tk {
+			return nil, fmt.Errorf("[AuthenticationFromToken] 从缓存获取token失败，err: %s", err)
+		}
+
+	*/
 	return
 }

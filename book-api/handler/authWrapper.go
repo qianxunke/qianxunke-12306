@@ -11,6 +11,12 @@ import (
 	"net/http"
 )
 
+//token 持有者
+type Subject struct {
+	ID   string `json:"id"`
+	Name string `json:"name,omitempty"`
+}
+
 // AuthWrapper 认证wrapper
 func AuthWrapper(c *gin.Context) {
 	log.Logf("[AuthWrapper]:请求 URL: %v", c.Request.RequestURI)
@@ -44,16 +50,12 @@ func AuthWrapper(c *gin.Context) {
 			c.Request.Header.Add("userId", tokenRsp.UserId)
 			c.Next()
 		} else {
-			/*
-				log.Logf("[AuthWrapper]，token不合法，无用户id")
-				resonseEntity := &api_common.ResponseEntity{}
-				resonseEntity.Message = "身份验证不通过，请先登陆!"
-				resonseEntity.Code = http.StatusBadRequest
-				c.JSON(http.StatusBadRequest, resonseEntity)
-				c.Abort()
-
-			*/
-			c.Next()
+			log.Logf("[AuthWrapper]，token不合法，无用户id")
+			resonseEntity := &api_common.ResponseEntity{}
+			resonseEntity.Message = "身份验证不通过，请先登陆!"
+			resonseEntity.Code = http.StatusBadRequest
+			c.JSON(http.StatusBadRequest, resonseEntity)
+			c.Abort()
 			return
 		}
 	}
