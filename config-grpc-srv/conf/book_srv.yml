@@ -9,7 +9,7 @@ book_srv:
     port: 8500
   db:
     mysql:
-      enabled: true
+      enabled: false
       url: root:root@(127.0.0.1:3306)/book_ticket_task?charset=utf8&parseTime=true&loc=Asia%2FShanghai
       maxIdleConnection: 50
       maxOpenConnection: 50
