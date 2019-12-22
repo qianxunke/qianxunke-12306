@@ -71,7 +71,7 @@ func (userApiService *UserApiService) Register(c *gin.Context) {
 
 	register := &Register{}
 	if err := c.ShouldBindJSON(&register); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+		_ = c.AbortWithError(http.StatusOK, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
 	reqInRegister := user.InDoneUserRegister{Userinf: &user.UserInf{UserName: register.User_name, UserEmail: register.User_email, MobilePhone: register.Mobile_phone, Password: register.Password},
@@ -132,7 +132,7 @@ func (userApiService *UserApiService) Logout(c *gin.Context) {
 	if len(token) == 0 {
 		response.Message = "token失效"
 		response.Code = http.StatusBadRequest
-		c.JSON(http.StatusBadRequest, response)
+		c.JSON(http.StatusOK, response)
 		return
 	}
 	var err error
@@ -142,7 +142,7 @@ func (userApiService *UserApiService) Logout(c *gin.Context) {
 	if err != nil {
 		response.Message = "退出登陆失败！"
 		response.Code = http.StatusInternalServerError
-		c.JSON(http.StatusInternalServerError, response)
+		c.JSON(http.StatusOK, response)
 		return
 	}
 	// 清除cookie
@@ -157,7 +157,7 @@ func (userApiService *UserApiService) Logout(c *gin.Context) {
 func (userApiService *UserApiService) GetCode(c *gin.Context) {
 	requestParams := &user.InGetVerificationCode{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+		_ = c.AbortWithError(http.StatusOK, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
 	if len(requestParams.Telephone) == 0 {
@@ -190,7 +190,7 @@ func (userApiService *UserApiService) GetUserInfoList(c *gin.Context) {
 func (userApiService *UserApiService) UpdateUserInfo(c *gin.Context) {
 	requestParams := &user.InUpdateUserInfo{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+		_ = c.AbortWithError(http.StatusOK, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
 	var userId string
@@ -220,7 +220,7 @@ func (userApiService *UserApiService) GetUserInfo(c *gin.Context) {
 func (userApiService *UserApiService) Login12306(c *gin.Context) {
 	requestParams := &user.In_Login12306{}
 	if err := c.ShouldBindJSON(&requestParams); err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
+		_ = c.AbortWithError(http.StatusOK, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
 	requestParams.UserId = api_common.GetHeadUserId(c)

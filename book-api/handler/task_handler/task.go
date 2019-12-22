@@ -25,11 +25,11 @@ func (api *ApiService) AddTask(c *gin.Context) {
 	req := &task.In_AddTask{}
 	req.TaskDetails = &task.TaskDetails{}
 	if err := c.ShouldBindJSON(&req.TaskDetails); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: err.Error()})
+		c.AbortWithStatusJSON(http.StatusOK, &api_common.Error{Code: http.StatusBadRequest, Message: err.Error()})
 		return
 	}
 	if len(c.Request.Header.Get("userId")) <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "身份可疑"})
+		c.AbortWithStatusJSON(http.StatusOK, &api_common.Error{Code: http.StatusBadRequest, Message: "身份可疑"})
 		return
 	}
 
@@ -42,7 +42,7 @@ func (api *ApiService) GetTask(c *gin.Context) {
 	req := &task.In_GetTaskInfo{}
 	Id := c.Param("taskId")
 	if len(Id) <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
+		c.AbortWithStatusJSON(http.StatusOK, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
 		return
 	}
 	req.TaskId = Id
@@ -54,7 +54,7 @@ func (api *ApiService) GetUserTask(c *gin.Context) {
 	req := &task.In_GetUserTaskList{}
 	req.UserId = c.Request.Header.Get("userId")
 	if len(req.UserId) <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
+		c.AbortWithStatusJSON(http.StatusOK, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
 		return
 	}
 	rsp, _ := api.serviceClient.GetUserTaskList(context.TODO(), req)
@@ -66,7 +66,7 @@ func (api *ApiService) UpdateTaskStatus(c *gin.Context) {
 	req.TaskId = c.DefaultQuery("taskId", "")
 	status := c.DefaultQuery("status", "-1")
 	if len(req.TaskId) <= 0 || status == "-1" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
+		c.AbortWithStatusJSON(http.StatusOK, &api_common.Error{Code: http.StatusBadRequest, Message: "参数非法"})
 		return
 	}
 	req.Status, _ = string_utl.StringToInt64(status)
