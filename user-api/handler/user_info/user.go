@@ -32,7 +32,6 @@ func (userApiService *UserApiService) Login(c *gin.Context) {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
-	log.Printf("reqInLogin : %v\n", reqInLogin)
 	//调用后台服务
 	rsp, _ := userApiService.serviceClient.DoneUserLogin(context.TODO(), &reqInLogin)
 	//返回结果
@@ -53,7 +52,7 @@ func (userApiService *UserApiService) Login(c *gin.Context) {
 	} else {
 		response.Message = rsp.Error.Message
 		response.Code = http.StatusBadRequest
-		c.AbortWithStatusJSON(http.StatusBadRequest, response)
+		c.AbortWithStatusJSON(http.StatusOK, response)
 		return
 	}
 }
