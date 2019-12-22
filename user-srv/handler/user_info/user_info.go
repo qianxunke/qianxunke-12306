@@ -95,3 +95,10 @@ func (e *Handler) Login12306(ctx context.Context, req *userProto.In_Login12306, 
 	rsp.Error = response.Error
 	return nil
 }
+func (e *Handler) GetUpdateInfo(ctx context.Context, req *userProto.In_UpdateInfo, rsp *userProto.Out_UpdateInfo) error {
+	log.Log("Received UserInfo.GetUpdateInfo request")
+	response := userService.GetUpdateInfo(req)
+	rsp.Error = response.Error
+	rsp.UpdateInfo = response.UpdateInfo
+	return nil
+}

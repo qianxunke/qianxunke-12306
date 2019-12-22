@@ -30,7 +30,9 @@ service UserInfo {
      rpc Login12306 (In_Login12306) returns (Out_Login12306) {
 
      }
-
+   //获取用户详细信息
+    rpc GetUpdateInfo (In_UpdateInfo) returns (Out_UpdateInfo) {
+    }
 
 }
 message Error {
@@ -191,3 +193,15 @@ message Out_Login12306 {
      Error Error = 1;
 }
 
+message Out_UpdateInfo {
+    Error Error = 1;
+    UpdateInfo updateInfo = 2;
+}
+message In_UpdateInfo {
+}
+message UpdateInfo {
+     string version=1;
+	 string url=2;
+	 string message=3;
+	 int64 is_force=4;
+}

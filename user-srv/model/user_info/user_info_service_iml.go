@@ -47,7 +47,7 @@ func (s *userInfoServiceImp) DoneUserLogin(req *userInfoProto.InDoneUserLogin) (
 		}
 		return
 	}
-	_ = hideUserPrivate(rsp.UserInf)
+	//	_ = hideUserPrivate(rsp.UserInf)
 	rsp.Token = rsp2.Token
 	return
 }
@@ -288,7 +288,7 @@ func (s *userInfoServiceImp) DoeUserRegister(req *userInfoProto.InDoneUserRegist
 		Code:    http.StatusOK,
 		Message: "注册成功",
 	}
-	_ = hideUserPrivate(rsp.UserInf)
+	//	_ = hideUserPrivate(rsp.UserInf)
 	return
 }
 
@@ -530,5 +530,19 @@ func (s *userInfoServiceImp) Login12306(req *userInfoProto.In_Login12306) (rsp *
 		Code:    http.StatusOK,
 		Message: "登陆成功",
 	}
+	return
+}
+
+//获取版本信息
+func (s *userInfoServiceImp) GetUpdateInfo(req *userInfoProto.In_UpdateInfo) (rsp *userInfoProto.Out_UpdateInfo) {
+	rsp = &userInfoProto.Out_UpdateInfo{}
+	rsp.UpdateInfo = &userInfoProto.UpdateInfo{}
+	DB := db.MasterEngine()
+	err := DB.Model(&userInfoProto.UpdateInfo{}).First(&rsp.UpdateInfo).Error
+	if err != nil {
+		rsp.Error = &userInfoProto.Error{Code: http.StatusInternalServerError, Message: err.Error()}
+		return
+	}
+	rsp.Error = &userInfoProto.Error{Code: http.StatusOK, Message: "ok"}
 	return
 }

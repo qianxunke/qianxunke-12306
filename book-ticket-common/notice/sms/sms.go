@@ -3,9 +3,14 @@ package sms
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/FrontMage/xinge"
+	"github.com/FrontMage/xinge/auth"
+	"github.com/FrontMage/xinge/req"
 	r "github.com/go-redis/redis"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -34,7 +39,7 @@ func SendTicketSuccessInfoToUser(phone string, userName string) {
 		user,
 		getMd5Pwd(password),
 		phone,
-		sign+"尊敬的"+userName+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
+		sign+"尊敬的"+phone+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
 	)
 	rsp, err := http.Get(smsapi + url)
 	if err != nil {
@@ -42,6 +47,7 @@ func SendTicketSuccessInfoToUser(phone string, userName string) {
 		return
 	}
 	SendTicketSuccessInfoToAdmin("18334142052", userName)
+	SendNotifyMessage(phone)
 	if rsp.StatusCode != http.StatusOK {
 		err = errors.New("短信回调失败")
 		return
@@ -55,7 +61,7 @@ func SendTicketSuccessInfoToAdmin(phone string, userName string) {
 		user,
 		getMd5Pwd(password),
 		phone,
-		sign+"尊敬的"+userName+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
+		sign+"尊敬的"+phone+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。",
 	)
 	println("----" + smsapi + url)
 	rsp, err := http.Get(smsapi + url)
@@ -67,6 +73,22 @@ func SendTicketSuccessInfoToAdmin(phone string, userName string) {
 		err = errors.New("短信回调失败")
 		return
 	}
+
+}
+
+func SendNotifyMessage(phone string) {
+	auther := auth.Auther{AppID: "0b532c7673194", SecretKey: "edf0455d5e55fc128203bbd309b1aa91"}
+	pushReq, _ := req.NewSingleAndroidAccountPush(phone, sign+"抢票捷报", "尊敬的"+phone+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。")
+	auther.Auth(pushReq)
+
+	c := &http.Client{}
+	rsp, _ := c.Do(pushReq)
+	defer rsp.Body.Close()
+	body, _ := ioutil.ReadAll(rsp.Body)
+
+	r := &xinge.CommonRsp{}
+	_ = json.Unmarshal(body, r)
+	fmt.Printf("%+v", r)
 
 }
 

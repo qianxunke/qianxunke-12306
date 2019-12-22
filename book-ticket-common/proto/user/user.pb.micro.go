@@ -52,6 +52,8 @@ type UserInfoService interface {
 	UpdateUserPassenger(ctx context.Context, in *In_UpdateUserPassenger, opts ...client.CallOption) (*Out_UpdateUserPassenger, error)
 	//登陆12306
 	Login12306(ctx context.Context, in *In_Login12306, opts ...client.CallOption) (*Out_Login12306, error)
+	//获取用户详细信息
+	GetUpdateInfo(ctx context.Context, in *In_UpdateInfo, opts ...client.CallOption) (*Out_UpdateInfo, error)
 }
 
 type userInfoService struct {
@@ -162,6 +164,16 @@ func (c *userInfoService) Login12306(ctx context.Context, in *In_Login12306, opt
 	return out, nil
 }
 
+func (c *userInfoService) GetUpdateInfo(ctx context.Context, in *In_UpdateInfo, opts ...client.CallOption) (*Out_UpdateInfo, error) {
+	req := c.c.NewRequest(c.name, "UserInfo.GetUpdateInfo", in)
+	out := new(Out_UpdateInfo)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for UserInfo service
 
 type UserInfoHandler interface {
@@ -183,6 +195,8 @@ type UserInfoHandler interface {
 	UpdateUserPassenger(context.Context, *In_UpdateUserPassenger, *Out_UpdateUserPassenger) error
 	//登陆12306
 	Login12306(context.Context, *In_Login12306, *Out_Login12306) error
+	//获取用户详细信息
+	GetUpdateInfo(context.Context, *In_UpdateInfo, *Out_UpdateInfo) error
 }
 
 func RegisterUserInfoHandler(s server.Server, hdlr UserInfoHandler, opts ...server.HandlerOption) error {
@@ -196,6 +210,7 @@ func RegisterUserInfoHandler(s server.Server, hdlr UserInfoHandler, opts ...serv
 		GetUserPassengerList(ctx context.Context, in *In_GetUserPassengerList, out *Out_GetUserPassengerList) error
 		UpdateUserPassenger(ctx context.Context, in *In_UpdateUserPassenger, out *Out_UpdateUserPassenger) error
 		Login12306(ctx context.Context, in *In_Login12306, out *Out_Login12306) error
+		GetUpdateInfo(ctx context.Context, in *In_UpdateInfo, out *Out_UpdateInfo) error
 	}
 	type UserInfo struct {
 		userInfo
@@ -242,4 +257,8 @@ func (h *userInfoHandler) UpdateUserPassenger(ctx context.Context, in *In_Update
 
 func (h *userInfoHandler) Login12306(ctx context.Context, in *In_Login12306, out *Out_Login12306) error {
 	return h.UserInfoHandler.Login12306(ctx, in, out)
+}
+
+func (h *userInfoHandler) GetUpdateInfo(ctx context.Context, in *In_UpdateInfo, out *Out_UpdateInfo) error {
+	return h.UserInfoHandler.GetUpdateInfo(ctx, in, out)
 }

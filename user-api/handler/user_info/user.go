@@ -71,14 +71,12 @@ type Register struct {
 func (userApiService *UserApiService) Register(c *gin.Context) {
 
 	register := &Register{}
-	log.Println("-------1------")
 	if err := c.ShouldBindJSON(&register); err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, errors.New("[Api] 请求参数不合法！"))
 		return
 	}
 	reqInRegister := user.InDoneUserRegister{Userinf: &user.UserInf{UserName: register.User_name, UserEmail: register.User_email, MobilePhone: register.Mobile_phone, Password: register.Password},
 		VerificationCode: register.Verification_code}
-	log.Printf("-------2------ %v\n", register)
 	//返回结果
 	response := &api_common.ResponseEntity{}
 	if reqInRegister.Userinf == nil || len(reqInRegister.VerificationCode) == 0 {
@@ -246,4 +244,11 @@ func (userApiService *UserApiService) GetUserPresenters(c *gin.Context) {
 	requestParams.UserId = userId
 	rsp, _ := userApiService.serviceClient.GetUserPassengerList(context.TODO(), requestParams)
 	api_common.SrvResultListDone(c, rsp.PassengerList, 0, 0, 0, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
+}
+
+func (userApiService *UserApiService) AppUpdateInfo(c *gin.Context) {
+	requestParams := &user.In_UpdateInfo{}
+
+	rsp, _ := userApiService.serviceClient.GetUpdateInfo(context.TODO(), requestParams)
+	api_common.SrvResultDone(c, rsp.UpdateInfo, &api_common.Error{Code: rsp.Error.Code, Message: rsp.Error.Message})
 }

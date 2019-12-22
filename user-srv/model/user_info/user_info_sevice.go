@@ -35,7 +35,9 @@ type UserService interface {
 	//修改用户联系人
 	UpdateUserPassenger(req *userInfoProto.In_UpdateUserPassenger) (rsp *userInfoProto.Out_UpdateUserPassenger)
 	//登陆12306客户
-	Login12306 (req *userInfoProto.In_Login12306)  (rsp *userInfoProto.Out_Login12306)
+	Login12306(req *userInfoProto.In_Login12306) (rsp *userInfoProto.Out_Login12306)
+
+	GetUpdateInfo(req *userInfoProto.In_UpdateInfo) (rsp *userInfoProto.Out_UpdateInfo)
 }
 
 func GetService() (UserService, error) {
@@ -54,11 +56,14 @@ func Init() {
 		return
 	}
 	master := db.MasterEngine()
-	if !master.HasTable(&userInfoProto.UserInf{}){
+	if !master.HasTable(&userInfoProto.UserInf{}) {
 		master.CreateTable(&userInfoProto.UserInf{})
 	}
-	if !master.HasTable(&userInfoProto.Passenger{}){
+	if !master.HasTable(&userInfoProto.Passenger{}) {
 		master.CreateTable(&userInfoProto.Passenger{})
+	}
+	if !master.HasTable(&userInfoProto.UpdateInfo{}) {
+		master.CreateTable(&userInfoProto.UpdateInfo{})
 	}
 	s = &userInfoServiceImp{}
 }
