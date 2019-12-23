@@ -93,7 +93,7 @@ func GetInitDc(conversation *conversation.Conversation) (GlobalRepeatSubmitToken
 	defer func() {
 		if re := recover(); re != nil {
 			if err == nil {
-				err = errors.New(fmt.Sprintf("[GetInitDc] %v", re))
+				err = errors.New(fmt.Sprintf("[GetInitDc] recover %v", re))
 				return
 			}
 		}

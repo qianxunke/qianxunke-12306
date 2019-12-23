@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 //下单
@@ -107,9 +108,11 @@ func Book(conversation conversation.Conversation, chooseTrain bean.Train, u task
 	}
 	for i := 0; i < len(setType); i++ {
 		err = checkOrderInfo(http.MethodPost, &conversation, boolResult, setType[i], u)
-		if err != nil {
-			log.Println("[checkOrderInfo] error :" + err.Error())
+		if err == nil {
+			break
 		}
+		time.Sleep(time.Second)
+
 	}
 	if err != nil {
 		log.Println("[checkOrderInfo] error :" + err.Error())
@@ -126,7 +129,11 @@ func Book(conversation conversation.Conversation, chooseTrain bean.Train, u task
 	err = getConfirmSingleForQueue(&conversation, boolResult)
 	if err != nil {
 		log.Println("[getConfirmSingleForQueue] error :" + err.Error())
-		return
+		//重试一次
+		err = getConfirmSingleForQueue(&conversation, boolResult)
+		if err != nil {
+			log.Println("重试 [getConfirmSingleForQueue] error :" + err.Error())
+		}
 	}
 	if !boolResult.ConfirmSingleForQueue {
 		log.Println("下单失败...")
