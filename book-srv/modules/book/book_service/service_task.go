@@ -51,7 +51,7 @@ func (s *service) StartBathDoneError() {
 			s.StartBathDoneError()
 		}
 	}()
-	ticker := time.NewTicker(time.Second * 60 * 30)
+	ticker := time.NewTicker(time.Second * 60 * 5)
 	go func() {
 		for true {
 			ta := <-errorChnnel
@@ -72,6 +72,7 @@ func (s *service) StartBathDoneError() {
 				log.Println("定时任务：err" + err.Error())
 				continue
 			}
+			log.Printf("定时处理异常任务,异常包裹：%v\n", rsp)
 			if len(rsp) > 0 {
 				for _, ta := range rsp {
 					errorChnnel <- ta
@@ -193,7 +194,7 @@ func DoneGo(ta task.Task) (err error) {
 	defer func() {
 		if re := recover(); re != nil {
 			if err == nil {
-				err = errors.New(fmt.Sprintf("订单号 ： %s, error %s\n", ta.TaskId, err.Error()))
+				err = errors.New(fmt.Sprintf("订单号 ： %s, recover %s\n", ta.TaskId, err.Error()))
 				return
 			}
 		}
