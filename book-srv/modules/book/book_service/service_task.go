@@ -157,7 +157,7 @@ func (s *service) StartBathTicket() {
 			if !timeIsOk() {
 				continue
 			}
-			rsp, err := s.GetNeedTicketList(20, 1, 1)
+			rsp, err := s.GetNeedTicketList(10, 1, 1)
 			if err != nil {
 				log.Println("定时任务：err" + err.Error())
 				continue
