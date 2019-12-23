@@ -326,6 +326,7 @@ func DoneGo(ta task.Task) (err error) {
 			return err
 		}
 		for i := 0; i < len(days); i++ {
+
 			trans, err := queryTrainMessage(CLeftTicketUrl, conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
 			if err != nil {
 				errNum++
@@ -375,6 +376,11 @@ func DoneGo(ta task.Task) (err error) {
 									ishaveSet = true
 								}
 							}
+							if item.Wz != "" && item.Wz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "S") {
+									ishaveSet = true
+								}
+							}
 							if item.Yw != "" && item.Yw != "无" {
 								if strings.Contains(lastTask.Task.SeatTypes, "3") {
 									ishaveSet = true
@@ -392,39 +398,38 @@ func DoneGo(ta task.Task) (err error) {
 							}
 						}
 						if ishaveSet {
-							continue
-						}
-						//登陆
-						//重试三次
-						var loginResult *login.LoginResult
-						for i := 3; i >= 0; i-- {
-							_tmp, err := login.LoginAndCheckToken(*out.UserInf)
-							if err == nil {
-								loginResult = _tmp
+							//登陆
+							//重试三次
+							var loginResult *login.LoginResult
+							for i := 3; i >= 0; i-- {
+								_tmp, err := login.LoginAndCheckToken(*out.UserInf)
+								if err == nil {
+									loginResult = _tmp
+									break
+								}
+								time.Sleep(time.Second * 3)
+							}
+							if loginResult == nil {
 								break
 							}
-							time.Sleep(time.Second * 3)
-						}
-						if loginResult == nil {
-							break
-						}
-						//开始抢票
-						bookErrNum := 0
-						for true {
-							if bookErrNum > 2 {
-								err = errors.New("抢票失败5次，取消抢票")
-								return err
+							//开始抢票
+							bookErrNum := 0
+							for true {
+								if bookErrNum > 2 {
+									err = errors.New("抢票失败5次，取消抢票")
+									return err
+								}
+								if !boo_core.Book(*loginResult.Conversat, chooiseTran, *lastTask) {
+									bookErrNum++
+								} else {
+									isOk = true
+									break
+								}
+								time.Sleep(time.Second * 3)
 							}
-							if !boo_core.Book(*loginResult.Conversat, chooiseTran, *lastTask) {
-								bookErrNum++
-							} else {
-								isOk = true
+							if isOk {
 								break
 							}
-							time.Sleep(time.Second * 3)
-						}
-						if isOk {
-							break
 						}
 					}
 				}
