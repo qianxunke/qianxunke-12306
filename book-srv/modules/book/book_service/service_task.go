@@ -247,12 +247,24 @@ func DoneGo(ta task.Task) (err error) {
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("[QueryTrainMessage] error %v", err)
 	}
-	_, err = ioutil.ReadAll(rsp.Body)
+	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("[QueryTrainMessage] error %v", err)
 	}
 	defer rsp.Body.Close()
+	str := string(body)
+	CLeftTicketUrl := ""
+	htmls := strings.Split(str, "\n")
+	for _, line := range htmls {
+		if strings.Contains(line, "CLeftTicketUrl") {
+			//	log.Println("line : "+line )
+			CLeftTicketUrl = line[strings.Index(line, "'")+1 : len(line)-2]
+			log.Println("CLeftTicketUrl : " + CLeftTicketUrl)
+			break
+		}
+	}
+
 	http_util.CookieChange(conversation2, rsp.Cookies())
 	//开始循环查询票
 	errNum := 0
@@ -305,7 +317,7 @@ func DoneGo(ta task.Task) (err error) {
 			return err
 		}
 		for i := 0; i < len(days); i++ {
-			trans, err := queryTrainMessage(conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
+			trans, err := queryTrainMessage(CLeftTicketUrl, conversation2, days[i], lastTask.Task.FindFrom, lastTask.Task.FindTo, lastTask.Task.Type)
 			if err != nil {
 				errNum++
 				continue
@@ -443,7 +455,7 @@ func DoneGo(ta task.Task) (err error) {
 	return
 }
 
-func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFrom string, FindTo string, Type string) (tran []bean.Train, err error) {
+func queryTrainMessage(CLeftTicketUrl string, con *conversation.Conversation, TrainDate string, FindFrom string, FindTo string, Type string) (tran []bean.Train, err error) {
 	//ADULT
 	defer func() {
 		if re := recover(); re != nil {
@@ -453,7 +465,7 @@ func queryTrainMessage(con *conversation.Conversation, TrainDate string, FindFro
 			}
 		}
 	}()
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+"Z?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
+	req1, _ := http.NewRequest(http.MethodGet, api.Query+CLeftTicketUrl+"?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := con.Client.Do(req1)

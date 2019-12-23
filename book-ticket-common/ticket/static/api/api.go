@@ -19,7 +19,7 @@ const CheckLoginStatus = "https://kyfw.12306.cn/otn/login/checkUser"
 const GetStationCode = "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js"
 
 //Link to query train message 查询
-const Query = "https://kyfw.12306.cn/otn/leftTicket/query"
+const Query = "https://kyfw.12306.cn/otn/leftTicket/"
 
 // submitOrderRequestURL
 const SubmitOrderRequestURL = "https://kyfw.12306.cn/otn/leftTicket/submitOrderRequest"
