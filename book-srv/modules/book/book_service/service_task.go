@@ -417,7 +417,8 @@ func DoneGo(ta task.Task) (err error) {
 							bookErrNum := 0
 							for true {
 								if bookErrNum > 2 {
-									err = errors.New("抢票失败5次，取消抢票")
+									err = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
+									err = errors.New("抢票失败3次，取消抢票,重新入队列抢票")
 									return err
 								}
 								if !boo_core.Book(*loginResult.Conversat, chooiseTran, *lastTask) {
