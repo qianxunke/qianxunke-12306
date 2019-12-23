@@ -72,7 +72,7 @@ func (s *service) StartBathDoneError() {
 				log.Println("定时任务：err" + err.Error())
 				continue
 			}
-			log.Printf("定时处理异常任务,异常包裹：%v\n", rsp)
+			//	log.Printf("定时处理异常任务,异常包裹：%v\n", rsp)
 			if len(rsp) > 0 {
 				for _, ta := range rsp {
 					errorChnnel <- ta
@@ -98,8 +98,9 @@ func DoneErrorTask(ta task.Task) {
 		log.Println(err.Error())
 		return
 	}
+
 	//如果是抢票中，且半小时还没更新，
-	if lastTask.Status == 2 && (time.Now().Unix()-lastTask.UpdateTime > 1800) {
+	if lastTask.Status == 2 && (time.Now().Unix()-lastTask.UpdateTime > 300) {
 		//判断抢票日期是否已经失效
 		s1 := strings.Split(lastTask.TrainDates, ",")
 		var ok bool
