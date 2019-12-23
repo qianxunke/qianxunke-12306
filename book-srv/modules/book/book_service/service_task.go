@@ -247,6 +247,12 @@ func DoneGo(ta task.Task) (err error) {
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
 		log.Printf("[QueryTrainMessage] error %v", err)
 	}
+	if rsp.StatusCode != http.StatusOK {
+		log.Printf("[https://kyfw.12306.cn/otn/leftTicket/init] error %d\n", rsp.StatusCode)
+		//先让该单锁5分钟吧
+		return
+	}
+
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		_ = d.UpdateStatus(lastTask.Task.GetTaskId(), 1)
@@ -394,7 +400,7 @@ func DoneGo(ta task.Task) (err error) {
 								loginResult = _tmp
 								break
 							}
-							time.Sleep(time.Second * 2)
+							time.Sleep(time.Second * 3)
 						}
 						if loginResult == nil {
 							break
@@ -402,7 +408,7 @@ func DoneGo(ta task.Task) (err error) {
 						//开始抢票
 						bookErrNum := 0
 						for true {
-							if bookErrNum > 5 {
+							if bookErrNum > 2 {
 								err = errors.New("抢票失败5次，取消抢票")
 								return err
 							}
