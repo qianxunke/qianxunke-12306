@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -471,7 +472,8 @@ func queryTrainMessage(CLeftTicketUrl string, con *conversation.Conversation, Tr
 			}
 		}
 	}()
-	req1, _ := http.NewRequest(http.MethodGet, api.Query+CLeftTicketUrl+"?leftTicketDTO.train_date="+TrainDate+"&leftTicketDTO.from_station="+FindFrom+"&leftTicketDTO.to_station="+FindTo+"&purpose_codes="+Type, nil)
+	s, _ := url.PathUnescape(api.Query + CLeftTicketUrl + "?leftTicketDTO.train_date=" + TrainDate + "&leftTicketDTO.from_station=" + FindFrom + "&leftTicketDTO.to_station=" + FindTo + "&purpose_codes=" + Type)
+	req1, _ := http.NewRequest(http.MethodGet, s, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
 	rsp1, err := con.Client.Do(req1)
