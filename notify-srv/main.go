@@ -1,15 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/FrontMage/xinge"
-	"github.com/FrontMage/xinge/auth"
-	"github.com/FrontMage/xinge/req"
+	"gitee.com/qianxunke/book-ticket-common/ticket/static/api"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"io/ioutil"
 	"log"
-	"net/http"
+	"net/url"
 	"notify-srv/config"
 	"os"
 	"strings"
@@ -41,20 +38,10 @@ func isCanQuery(trainDate string) float64 {
 }
 
 func main() {
-	auther := auth.Auther{AppID: "0b532c7673194", SecretKey: "edf0455d5e55fc128203bbd309b1aa91"}
-	pushReq, _ := req.NewSingleAndroidAccountPush("1833****2052", "抢票捷报", "尊敬的"+"2052"+"：EsayGo已为您抢票成功，请在30分钟内到12306官方网站或APP完成支付。")
-
-	auther.Auth(pushReq)
-
-	c := &http.Client{}
-	rsp, _ := c.Do(pushReq)
-	defer rsp.Body.Close()
-	body, _ := ioutil.ReadAll(rsp.Body)
-
-	r := &xinge.CommonRsp{}
-	_ = json.Unmarshal(body, r)
-	fmt.Printf("%+v", r)
-
+	//	fmt.Printf("%d", time.Now().Unix())
+	tem := "leftTicket/queryZ"
+	s, _ := url.PathUnescape(api.Query + tem)
+	fmt.Println(s + "\n" + api.Query + tem)
 }
 
 func Init() {

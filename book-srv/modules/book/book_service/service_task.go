@@ -348,10 +348,10 @@ func DoneGo(ta task.Task) (err error) {
 						'商务座': 9,
 						'硬座': 1,
 						'无座': 1,
-						'软座': 2,
-							'软卧': 4,
-						硬卧': 3,
-							  }
+						 '软座': 2,
+						 '软卧': 4,
+						 硬卧': 3,
+						}
 						*/
 						var ishaveSet bool
 						if strings.Contains(item.Num, "D") || strings.Contains(item.Num, "G") {
@@ -481,7 +481,6 @@ func queryTrainMessage(CLeftTicketUrl string, con *conversation.Conversation, Tr
 		}
 	}()
 	s, _ := url.PathUnescape(api.Query + CLeftTicketUrl + "?leftTicketDTO.train_date=" + TrainDate + "&leftTicketDTO.from_station=" + FindFrom + "&leftTicketDTO.to_station=" + FindTo + "&purpose_codes=" + Type)
-	log.Println("CLeftTicketUrl ：" + CLeftTicketUrl + "\n" + s)
 	req1, _ := http.NewRequest(http.MethodGet, s, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
