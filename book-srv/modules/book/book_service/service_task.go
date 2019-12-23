@@ -473,6 +473,7 @@ func queryTrainMessage(CLeftTicketUrl string, con *conversation.Conversation, Tr
 		}
 	}()
 	s, _ := url.PathUnescape(api.Query + CLeftTicketUrl + "?leftTicketDTO.train_date=" + TrainDate + "&leftTicketDTO.from_station=" + FindFrom + "&leftTicketDTO.to_station=" + FindTo + "&purpose_codes=" + Type)
+	log.Println(s)
 	req1, _ := http.NewRequest(http.MethodGet, s, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
