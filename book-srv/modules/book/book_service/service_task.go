@@ -261,15 +261,17 @@ func DoneGo(ta task.Task) (err error) {
 	}
 	defer rsp.Body.Close()
 	str := string(body)
-	CLeftTicketUrl := ""
+	var CLeftTicketUrl string
 	htmls := strings.Split(str, "\n")
 	for _, line := range htmls {
 		if strings.Contains(line, "CLeftTicketUrl") {
-			//	log.Println("line : "+line )
 			CLeftTicketUrl = line[strings.Index(line, "'")+1 : len(line)-2]
 			log.Println("CLeftTicketUrl : " + CLeftTicketUrl)
 			break
 		}
+	}
+	if len(CLeftTicketUrl) == 0 {
+		log.Println("CLeftTicketUrl : 空")
 	}
 
 	http_util.CookieChange(conversation2, rsp.Cookies())
@@ -473,7 +475,7 @@ func queryTrainMessage(CLeftTicketUrl string, con *conversation.Conversation, Tr
 		}
 	}()
 	s, _ := url.PathUnescape(api.Query + CLeftTicketUrl + "?leftTicketDTO.train_date=" + TrainDate + "&leftTicketDTO.from_station=" + FindFrom + "&leftTicketDTO.to_station=" + FindTo + "&purpose_codes=" + Type)
-	log.Println(s)
+	log.Println("CLeftTicketUrl ：" + CLeftTicketUrl + "\n" + s)
 	req1, _ := http.NewRequest(http.MethodGet, s, nil)
 	http_util.AddReqCookie(con.C, req1)
 	http_util.SetReqHeader(req1)
