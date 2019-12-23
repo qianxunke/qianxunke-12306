@@ -124,8 +124,8 @@ func FormatInitDc(ticketInfoForPassengerForm string) (intDoc InitDC, err error) 
 	if err != nil {
 		return
 	}
-	log.Printf("[formatInewTicketInfoForPassengerFormnitDc] doc :%s\n", newTicketInfoForPassengerForm)
-	log.Printf("[formatInitDc] doc :%v\n", doc)
+	//	log.Printf("[formatInewTicketInfoForPassengerFormnitDc] doc :%s\n", newTicketInfoForPassengerForm)
+	//	log.Printf("[formatInitDc] doc :%v\n", doc)
 	intDoc.TrainDateTime = fmt.Sprintf("%d", doc.OrderRequestDTO.Train_date.Time)
 	intDoc.FromStationTelecode = doc.OrderRequestDTO.From_station_telecode
 	t, _ := url.PathUnescape(doc.LeftTicketStr)

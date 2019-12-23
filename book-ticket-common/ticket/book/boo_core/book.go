@@ -185,7 +185,6 @@ func GetPassenger(method string, conversation *conversation.Conversation, Global
 		return
 	}
 	defer rsp.Body.Close()
-	log.Printf("[getPassenger]:  %s\n", string(bodyBytes))
 	if rsp.StatusCode == http.StatusOK {
 		http_util.CookieChange(conversation, rsp.Cookies())
 		pData := bookBean.PresenterVa{}

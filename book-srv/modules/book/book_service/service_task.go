@@ -313,7 +313,64 @@ func DoneGo(ta task.Task) (err error) {
 				for _, item := range trans {
 					//log.Println("TrainCode :" + item.Num + "  CanBuy: " + item.CanBuy)
 					if strings.Contains(lastTask.Task.Trips, item.Num) && item.CanBuy == "Y" {
+						//判断是否有票，
 						chooiseTran = item
+						/**
+						PASSENGER_TICKER_STR = {
+						'一等座': 'M',
+						 '特等座': 'P',
+						'二等座': 'O',
+						'商务座': 9,
+						'硬座': 1,
+						'无座': 1,
+						'软座': 2,
+							'软卧': 4,
+						硬卧': 3,
+							  }
+						*/
+						var ishaveSet bool
+						if strings.Contains(item.Num, "D") || strings.Contains(item.Num, "G") {
+							if item.Edz != "" && item.Edz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "O") {
+									ishaveSet = true
+								}
+							}
+							if item.Ydz != "" && item.Ydz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "M") {
+									ishaveSet = true
+								}
+							}
+							if item.Swtdz != "" && item.Swtdz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "9") {
+									ishaveSet = true
+								}
+							}
+
+						} else {
+							if item.Yz != "" && item.Yz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "1") {
+									ishaveSet = true
+								}
+							}
+							if item.Yw != "" && item.Yw != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "3") {
+									ishaveSet = true
+								}
+							}
+							if item.Rw != "" && item.Rw != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "4") {
+									ishaveSet = true
+								}
+							}
+							if item.Rz != "" && item.Rz != "无" {
+								if strings.Contains(lastTask.Task.SeatTypes, "2") {
+									ishaveSet = true
+								}
+							}
+						}
+						if ishaveSet {
+							continue
+						}
 						//登陆
 						//重试三次
 						var loginResult *login.LoginResult
