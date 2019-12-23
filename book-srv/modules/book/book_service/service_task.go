@@ -272,6 +272,7 @@ func DoneGo(ta task.Task) (err error) {
 	}
 	if len(CLeftTicketUrl) == 0 {
 		log.Println("CLeftTicketUrl : 空")
+		return
 	}
 
 	http_util.CookieChange(conversation2, rsp.Cookies())
