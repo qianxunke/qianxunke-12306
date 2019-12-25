@@ -9,5 +9,5 @@ book_api:
     - /user/code
   consul:
     enabled: true
-    host: 127.0.0.1
+    host: 172.17.0.12
     port: 8500

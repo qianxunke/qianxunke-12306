@@ -266,7 +266,6 @@ func DoneGo(ta task.Task) (err error) {
 	for _, line := range htmls {
 		if strings.Contains(line, "CLeftTicketUrl") {
 			CLeftTicketUrl = line[strings.Index(line, "'")+1 : len(line)-2]
-			log.Println("CLeftTicketUrl : " + CLeftTicketUrl)
 			break
 		}
 	}
