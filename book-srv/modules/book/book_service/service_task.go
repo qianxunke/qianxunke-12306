@@ -101,7 +101,7 @@ func DoneErrorTask(ta task.Task) {
 	}
 
 	//如果是抢票中，且半小时还没更新，
-	if lastTask.Status == 2 && (time.Now().Unix()-lastTask.UpdateTime > 300) {
+	if lastTask.Status == 2 && (time.Now().Unix()-lastTask.UpdateTime > 600) {
 		//判断抢票日期是否已经失效
 		s1 := strings.Split(lastTask.TrainDates, ",")
 		var ok bool
@@ -126,6 +126,25 @@ func DoneErrorTask(ta task.Task) {
 			days := isCanQuery(item)
 			//如果还可以抢票
 			if days > 0 && days < 30 {
+				ok = true
+				break
+			}
+		}
+		if ok {
+			//如果满足条件则更新任务，重新回到抢票中
+			_ = d.UpdateStatus(lastTask.GetTaskId(), 1)
+			return
+		}
+	}
+
+	//如果是本地抢票，且10分钟还没更新，
+	if lastTask.Status == 6 && (time.Now().Unix()-lastTask.UpdateTime > 600) {
+		//判断抢票日期是否已经失效
+		s1 := strings.Split(lastTask.TrainDates, ",")
+		var ok bool
+		for _, item := range s1 {
+			//如果还可以抢票
+			if isCanQuery(item) > 0 {
 				ok = true
 				break
 			}
@@ -213,6 +232,11 @@ func DoneGo(ta task.Task) (err error) {
 	//修改状态 正在抢票
 	//为了安全，再判断当前时间是否可抢 5,取消啦
 	if lastTask.Task.Status == 5 {
+		return
+	}
+
+	//已经本地抢票
+	if lastTask.Task.Status == 6 {
 		return
 	}
 	//如果为 2已经有人在抢啦，就不需要抢
