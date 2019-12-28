@@ -230,7 +230,7 @@ func (dao *taskDaoIml) ExceptionQuery(limit int64, pages int64) (rsp []task.Task
 	total := 0
 	offset := (pages - 1) * limit
 	//先查询task
-	err = DB.Model(&task.Task{}).Where("status = 2 or status = 4").Count(&total).Error
+	err = DB.Model(&task.Task{}).Where("status = 2 or status = 4 or status = 6").Count(&total).Error
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +238,7 @@ func (dao *taskDaoIml) ExceptionQuery(limit int64, pages int64) (rsp []task.Task
 		return make([]task.Task, 0), err
 	}
 
-	err = DB.Where("status = 2 or status = 4").Offset(offset).Limit(limit).Find(&rsp).Error
+	err = DB.Where("status = 2 or status = 4 or status = 6").Offset(offset).Limit(limit).Find(&rsp).Error
 	return
 }
 
