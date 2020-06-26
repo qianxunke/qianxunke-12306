@@ -10,7 +10,7 @@ Features
 -  **完整类智行APP功能**
 - 后端架构为微服务，包括鉴权服务，配置中心（grpc），服务发现（consol），用户service，用户api，抢票任  务service，查询余票service，订票service等
 -  自动打码下单
--  App客户端（目前暂时只开发android端）（点我查看APP端源码）
+-  App客户端（目前暂时只开发android端）  [esaygo_android](https://github.com/qianxunke/esaygo_android)
 - 
 
 
